@@ -213,6 +213,7 @@
     event.preventDefault();
     state.name = document.querySelector("#player-name").value.trim();
     if (!state.name) return;
+    if (!state.photo) { const error = document.querySelector("#photo-error"); error.textContent = "Prima la foto: in classifica vogliamo riconoscerti!"; error.hidden = false; return; }
     state.index = 0; state.score = 0; state.startedAt = Date.now(); state.resultId = null;
     feedbackPools = { positive: shuffled(positive), negative: shuffled(negative) };
     clearInterval(state.interval);

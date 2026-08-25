@@ -221,8 +221,10 @@ input:focus { border-color: var(--cherry); }
 
 .button span { float: right; }
 .button:hover { border-color: var(--ink); background: var(--ink); transform: translateY(-2px); box-shadow: 0 8px 19px #30252a1f; }
-.leaderboard-link { margin-top: 19px; padding: 7px 10px; border: 0; background: transparent; color: var(--cherry); cursor: pointer; font-size: 13px; }
-.leaderboard-link span { margin-left: 3px; }
+.leaderboard-link { display: flex; width: min(100%, 385px); min-height: 49px; align-items: center; justify-content: center; gap: 10px; margin: 16px auto 0; padding: 11px 15px; border: 1px solid #ead5dc; border-radius: 14px; background: #fff8fa; color: var(--cherry); cursor: pointer; font-size: 13px; transition: background 160ms, transform 160ms; }
+.leaderboard-link:hover { background: #f7e9ed; transform: translateY(-1px); }
+.leaderboard-link-icon { font-size: 19px; }
+.leaderboard-link-arrow { margin-left: auto; font-size: 15px; }
 .footnote { margin-top: 22px; color: var(--muted); font-size: 12px; font-style: italic; }
 
 .quiz-meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; }
