@@ -2,8 +2,8 @@
   "use strict";
 
   const questions = window.MARTINA_QUESTIONS;
-  const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking") };
-  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, resultId: null };
+  const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), participant: document.querySelector("#participant") };
+  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, resultId: null, answers: [], previousScreen: "ranking" };
   const supabase = window.MARTINA_SUPABASE;
   const positive = window.MARTINA_FEEDBACK?.positive || [
     "Esatto. Martina approverebbe con un cenno molto teatrale.",
@@ -98,7 +98,7 @@
 
   async function saveResult(timeSeconds) {
     const photoPath = await uploadPhoto();
-    const payload = { player_name: state.name, photo_path: photoPath, score: state.score, total_questions: questions.length, time_seconds: timeSeconds };
+    const payload = { player_name: state.name, photo_path: photoPath, score: state.score, total_questions: questions.length, time_seconds: timeSeconds, answers: state.answers };
     const response = await fetch(`${supabase.url}/rest/v1/quiz_results`, { method: "POST", headers: apiHeaders({ "Content-Type": "application/json", Prefer: "return=representation" }), body: JSON.stringify(payload) });
     if (!response.ok) throw new Error("Non sono riuscita a salvare il risultato.");
     const rows = await response.json();
@@ -108,20 +108,42 @@
   function renderLeaderboard(rows, list = document.querySelector("#leaderboard-list")) {
     list.replaceChildren();
     rows.forEach((row, index) => {
-      const item = document.createElement("div"); item.className = `leaderboard-row${row.id === state.resultId ? " leaderboard-current" : ""}`;
+      const item = document.createElement("button"); item.type = "button"; item.className = `leaderboard-row${row.id === state.resultId ? " leaderboard-current" : ""}`; item.setAttribute("aria-label", `Apri il riepilogo di ${row.player_name}`);
       const rank = document.createElement("span"); rank.className = "leaderboard-rank"; rank.textContent = index < 3 ? ["🥇", "🥈", "🥉"][index] : `${index + 1}.`;
       const avatar = document.createElement(row.photo_path ? "img" : "span"); avatar.className = "leaderboard-avatar";
       if (row.photo_path) { avatar.src = `${supabase.url}/storage/v1/object/public/quiz-photos/${encodeURIComponent(row.photo_path)}`; avatar.alt = ""; } else avatar.textContent = row.player_name.trim().charAt(0).toUpperCase();
       const details = document.createElement("div"); details.className = "leaderboard-player"; const name = document.createElement("strong"); name.textContent = row.player_name; const time = document.createElement("small"); time.textContent = formatSeconds(row.time_seconds); details.append(name, time);
       const score = document.createElement("span"); score.className = "leaderboard-score"; score.textContent = `${row.score}/${row.total_questions}`;
-      item.append(rank, avatar, details, score); list.append(item);
+      item.append(rank, avatar, details, score); item.addEventListener("click", () => openParticipant(row, list.id === "leaderboard-list" ? "results" : "ranking")); list.append(item);
     });
   }
 
   async function fetchLeaderboard() {
-    const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds&order=score.desc,time_seconds.asc,created_at.asc&limit=50`, { headers: apiHeaders() });
+    const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds,answers&order=score.desc,time_seconds.asc,created_at.asc&limit=50`, { headers: apiHeaders() });
     if (!response.ok) throw new Error("Non sono riuscita a caricare la classifica.");
     return response.json();
+  }
+
+  function openParticipant(row, previousScreen) {
+    state.previousScreen = previousScreen;
+    const card = document.querySelector("#participant-card"); card.replaceChildren();
+    const avatar = document.createElement(row.photo_path ? "img" : "span"); avatar.className = "participant-avatar";
+    if (row.photo_path) { avatar.src = `${supabase.url}/storage/v1/object/public/quiz-photos/${encodeURIComponent(row.photo_path)}`; avatar.alt = `Foto di ${row.player_name}`; } else avatar.textContent = row.player_name.trim().charAt(0).toUpperCase();
+    const name = document.createElement("h2"); name.textContent = row.player_name;
+    const summary = document.createElement("p"); summary.className = "participant-summary"; summary.textContent = `${row.score} risposte giuste su ${row.total_questions} · ${formatSeconds(row.time_seconds)}`;
+    card.append(avatar, name, summary);
+    const list = document.querySelector("#participant-answers"); list.replaceChildren();
+    if (!Array.isArray(row.answers) || !row.answers.length) { const empty = document.createElement("p"); empty.className = "leaderboard-status"; empty.textContent = "Il dettaglio non è disponibile: questo quiz è stato completato prima dell’aggiornamento."; list.append(empty); }
+    else row.answers.forEach((answer, index) => {
+      const item = document.createElement("article"); item.className = `participant-answer ${answer.is_correct ? "participant-correct" : "participant-incorrect"}`;
+      const number = document.createElement("span"); number.className = "participant-question-number"; number.textContent = `${String(index + 1).padStart(2, "0")} · ${answer.is_correct ? "corretta" : "sbagliata"}`;
+      const question = document.createElement("h4"); question.textContent = answer.question;
+      const selected = document.createElement("p"); selected.textContent = `Risposta: ${answer.selected_answer}`;
+      item.append(number, question, selected);
+      if (!answer.is_correct) { const correct = document.createElement("p"); correct.className = "participant-correct-answer"; correct.textContent = `Risposta corretta: ${answer.correct_answer}`; item.append(correct); }
+      list.append(item);
+    });
+    showScreen("participant"); window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function updateLeaderboard(timeSeconds) {
@@ -163,6 +185,7 @@
     const question = questions[state.index];
     const correct = index === question.correct;
     if (correct) state.score += 1;
+    state.answers.push({ question: question.question, selected_answer: question.answers[index], correct_answer: question.answers[question.correct], is_correct: correct });
     const buttons = document.querySelectorAll(".answer");
     buttons.forEach(button => { button.disabled = true; });
     buttons[question.correct].classList.add("correct");
@@ -225,7 +248,7 @@
     state.name = document.querySelector("#player-name").value.trim();
     if (!state.name) return;
     if (!state.photo) { const error = document.querySelector("#photo-error"); error.textContent = "Prima la foto: in classifica vogliamo riconoscerti!"; error.hidden = false; return; }
-    state.index = 0; state.score = 0; state.startedAt = Date.now(); state.resultId = null;
+    state.index = 0; state.score = 0; state.startedAt = Date.now(); state.resultId = null; state.answers = [];
     feedbackPools = { positive: shuffled(positive), negative: shuffled(negative) };
     clearInterval(state.interval);
     document.querySelector("#timer").textContent = "00:00";
@@ -243,4 +266,5 @@
     catch (error) { status.textContent = error.message; }
   });
   document.querySelector("#back-from-ranking").addEventListener("click", () => showScreen("welcome"));
+  document.querySelector("#back-from-participant").addEventListener("click", () => showScreen(state.previousScreen));
 })();

@@ -318,7 +318,8 @@ input:focus { border-color: var(--cherry); }
 .leaderboard-heading h3 { margin: 0; font-family: "Bodoni 72", Didot, Baskerville, serif; font-size: 27px; font-weight: 400; }
 .leaderboard-status { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .leaderboard-list { display: grid; gap: 8px; }
-.leaderboard-row { display: flex; min-height: 62px; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; }
+.leaderboard-row { display: flex; width: 100%; min-height: 62px; align-items: center; gap: 10px; padding: 8px; border: 0; border-radius: 12px; background: transparent; color: var(--ink); cursor: pointer; text-align: left; transition: background 160ms; }
+.leaderboard-row:hover { background: #faf3f5; }
 .leaderboard-current { background: #fbf1f4; }
 .leaderboard-rank { width: 27px; flex-shrink: 0; color: var(--muted); font-size: 14px; text-align: center; }
 .leaderboard-avatar { display: grid; width: 38px; height: 38px; flex-shrink: 0; place-items: center; border-radius: 50%; background: #f2e5e9; color: var(--cherry); font-size: 15px; object-fit: cover; }
@@ -326,10 +327,27 @@ input:focus { border-color: var(--cherry); }
 .leaderboard-player strong { overflow: hidden; font-size: 13px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .leaderboard-player small { color: var(--muted); font-size: 11px; }
 .leaderboard-score { color: var(--cherry); font-size: 13px; font-weight: 600; }
+.ranking { margin-top: clamp(28px, 8vh, 74px); margin-bottom: auto; }
 .ranking-back { padding: 8px 0; border: 0; background: transparent; color: var(--cherry); cursor: pointer; font-size: 13px; }
-.ranking-intro { margin-top: 36px; text-align: center; }
+.ranking-intro { margin-top: 24px; text-align: center; }
 .ranking-intro h2 { margin: 12px 0; font-size: clamp(39px, 8vw, 56px); }
 .ranking-intro h2 em { color: var(--cherry); font-weight: 400; }
+.participant { padding-top: 12px; }
+.participant-card { margin: 24px 0 31px; padding: 27px 19px 22px; border: 1px solid #f0e5e8; border-radius: 20px; background: #ffffffbf; text-align: center; }
+.participant-avatar { display: grid; width: 86px; height: 86px; margin: 0 auto 13px; place-items: center; border: 3px solid #f4e7eb; border-radius: 50%; background: #f2e5e9; color: var(--cherry); font-size: 31px; object-fit: cover; }
+.participant-card h2 { margin: 0 0 7px; font-size: 35px; }
+.participant-summary { margin: 0; color: var(--muted); font-size: 12px; }
+.participant-answers-heading { margin-bottom: 14px; }
+.participant-answers-heading .eyebrow { margin-bottom: 5px; }
+.participant-answers-heading h3 { margin: 0; font-family: "Bodoni 72", Didot, Baskerville, serif; font-size: 25px; font-weight: 400; }
+.participant-answers { display: grid; gap: 11px; }
+.participant-answer { padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.participant-correct { border-left: 3px solid #a8bba2; }
+.participant-incorrect { border-left: 3px solid #deb6bd; }
+.participant-question-number { color: var(--muted); font-size: 10px; }
+.participant-answer h4 { margin: 9px 0 7px; font-size: 14px; font-weight: 500; line-height: 1.4; }
+.participant-answer p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.participant-answer .participant-correct-answer { color: var(--green); }
 .profile { width: min(100%, 420px); margin-top: auto; margin-bottom: auto; padding-top: 8px; padding-bottom: 74px; animation: question-arrive 320ms ease both; }
 .profile-heading { margin-top: 0; text-align: center; }
 .profile-heading h2 { margin: 13px 0; font-size: clamp(40px, 8vw, 57px); }
@@ -364,6 +382,9 @@ input:focus { border-color: var(--cherry); }
   .result-card { padding: 29px 17px 5px; }
   .answer { min-height: 56px; padding: 12px; }
   .feedback-image { height: 210px; }
+  .ranking { margin-top: clamp(20px, 6vh, 48px); }
+  .ranking-intro { margin-top: 19px; }
+  .ranking .leaderboard { margin-top: 23px; }
   .profile { margin-top: auto; margin-bottom: auto; padding-top: 0; padding-bottom: 62px; }
   .profile-heading { margin-top: 0; }
   .profile form { margin-top: 19px; }
