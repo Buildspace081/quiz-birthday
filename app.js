@@ -213,8 +213,8 @@
     if (state.score === questions.length) { title = "Congratulazioni, sei la mia migliore amica: hai vinto me. Mi dispiace."; description = "Trenta su trenta. O sei la sua anima gemella, o sei letteralmente Martina con un altro nome."; }
     else if (state.score >= 27) { title = "Sai così tante cose su di me che ormai non posso più liberarmi di te."; description = "Conosci Martina meglio di quanto lei conosca sé stessa. Leggermente inquietante, ma anche molto tenero."; }
     else if (state.score >= 22) { title = "Sei ufficialmente nel mio gruppo ristretto. Quello dove si sparla di tutte."; description = "Sei chiaramente tra le persone fidate. Qualche dettaglio ti sfugge, ma il posto nel gruppo è assolutamente salvo."; }
-    else if (state.score >= 16) { title = "Bestie"; description = "Le basi ci sono e pure qualche colpo di genio. Ti manca soltanto un ripasso dei vocali più importanti."; }
-    else if (state.score >= 10) { title = "Amica, con riserva"; description = "Ci sono margini di miglioramento. Forse durante gli ultimi aperitivi stavi seguendo più lo spritz che Martina."; }
+    else if (state.score >= 16) { title = "Ti salvo tra le amiche, ma sui vocali dobbiamo lavorare."; description = "Le basi ci sono e pure qualche colpo di genio. Ti manca soltanto un ripasso dei vocali più importanti."; }
+    else if (state.score >= 10) { title = "Ti voglio bene, ma forse frequenti un’altra Martina."; description = "Ci sono margini di miglioramento. Forse durante gli ultimi aperitivi stavi seguendo più lo spritz che Martina."; }
     else { title = "Pensavo fossimo amiche. Evidentemente pensavo male."; description = "Martina chiede gentilmente nome, cognome e da quanto tempo vi frequentate. Perché qualcosa non torna."; reactionImage = "assets/martina-risultato-peggiore.png"; }
     document.querySelector("#score-value").textContent = state.score;
     document.querySelector("#result-greeting").textContent = `${state.name}, abbiamo bisogno di parlare…`;
