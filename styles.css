@@ -246,8 +246,7 @@ input:focus { border-color: var(--cherry); }
 .feedback-message { display: flex; align-items: flex-start; gap: 11px; }
 .feedback-avatar { width: 42px; height: 42px; flex-shrink: 0; border: 2px solid #fff; border-radius: 50%; object-fit: cover; object-position: center 30%; box-shadow: 0 2px 9px #30252a12; }
 .feedback-bubble { position: relative; flex: 1; padding: 12px 14px; border: 1px solid #f0e3e7; border-radius: 4px 15px 15px 15px; background: #fffafc; }
-.feedback-author { color: var(--cherry); font-size: 10px; font-weight: 600; letter-spacing: .4px; }
-.feedback p { margin: 6px 0 0; color: var(--muted); font-size: 13px; font-style: italic; line-height: 1.6; }
+.feedback p { margin: 0; color: var(--muted); font-size: 13px; font-style: italic; line-height: 1.6; }
 
 .result-greeting { margin: 0 0 14px; color: var(--sage); font-size: 14px; font-style: italic; }
 
