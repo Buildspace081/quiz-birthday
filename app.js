@@ -201,12 +201,23 @@
     updateLeaderboard(timeSeconds);
   }
 
+  function updateProfileForm() {
+    const hasName = Boolean(document.querySelector("#player-name").value.trim());
+    document.querySelector("#profile-submit").disabled = !hasName || !state.photo;
+    document.querySelector(".profile-name").classList.toggle("profile-complete", hasName);
+  }
+
+  document.querySelector("#player-name").addEventListener("input", updateProfileForm);
+
   document.querySelector("#player-photo").addEventListener("change", event => {
     const photo = event.target.files[0]; const error = document.querySelector("#photo-error"); error.hidden = true;
-    if (!photo) { state.photo = null; return; }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type) || photo.size > 5 * 1024 * 1024) { state.photo = null; event.target.value = ""; error.textContent = "Scegli una foto JPG, PNG o WebP di massimo 5 MB."; error.hidden = false; return; }
+    if (!photo) { state.photo = null; updateProfileForm(); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type) || photo.size > 5 * 1024 * 1024) { state.photo = null; event.target.value = ""; error.textContent = "Scegli una foto JPG, PNG o WebP di massimo 5 MB."; error.hidden = false; updateProfileForm(); return; }
     state.photo = photo;
     const preview = document.querySelector("#photo-preview"); preview.replaceChildren(); const image = document.createElement("img"); image.src = URL.createObjectURL(photo); image.alt = ""; preview.append(image);
+    document.querySelector("#photo-caption").textContent = "Perfetta: in classifica farai faville.";
+    document.querySelector(".photo-upload").classList.add("photo-ready");
+    updateProfileForm();
   });
 
   document.querySelector("#start-form").addEventListener("submit", event => {
@@ -223,8 +234,7 @@
   });
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; state.index < questions.length ? renderQuestion() : finish(); });
   document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); });
-  document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); requestAnimationFrame(() => document.querySelector("#player-name").focus()); });
-  document.querySelector("#back-from-profile").addEventListener("click", () => showScreen("welcome"));
+  document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
   document.querySelector("#open-leaderboard").addEventListener("click", async () => {
     showScreen("ranking");
     const status = document.querySelector("#ranking-status"); const list = document.querySelector("#ranking-list");
