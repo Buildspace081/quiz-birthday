@@ -7,7 +7,7 @@ async function build() {
   const output = path.join(__dirname, "dist");
   await fs.mkdir(output, { recursive: true });
 
-  for (const filename of ["index.html", "styles.css", "app.js", "questions.js", "feedback.js"]) {
+  for (const filename of ["index.html", "styles.css", "app.js", "questions.js", "feedback.js", "supabase-config.js"]) {
     await fs.copyFile(path.join(__dirname, filename), path.join(output, filename));
   }
 

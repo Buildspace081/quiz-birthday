@@ -3,7 +3,8 @@
 
   const questions = window.MARTINA_QUESTIONS;
   const screens = { welcome: document.querySelector("#welcome"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results") };
-  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null };
+  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, resultId: null };
+  const supabase = window.MARTINA_SUPABASE;
   const positive = window.MARTINA_FEEDBACK?.positive || [
     "Esatto. Martina approverebbe con un cenno molto teatrale.",
     "Risposta giusta: il vostro gruppo WhatsApp può stare tranquillo.",
@@ -82,6 +83,53 @@
   function showScreen(name) { Object.entries(screens).forEach(([key, screen]) => { screen.hidden = key !== name; }); }
   function elapsed() { const seconds = Math.floor((Date.now() - state.startedAt) / 1000); return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }
 
+  function apiHeaders(extra = {}) { return { apikey: supabase.anonKey, Authorization: `Bearer ${supabase.anonKey}`, ...extra }; }
+
+  function formatSeconds(seconds) { return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }
+
+  async function uploadPhoto() {
+    if (!state.photo) return null;
+    const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    const filename = `${crypto.randomUUID()}.${extensions[state.photo.type]}`;
+    const response = await fetch(`${supabase.url}/storage/v1/object/quiz-photos/${filename}`, { method: "POST", headers: apiHeaders({ "Content-Type": state.photo.type }), body: state.photo });
+    if (!response.ok) throw new Error("Non sono riuscita a caricare la foto.");
+    return filename;
+  }
+
+  async function saveResult(timeSeconds) {
+    const photoPath = await uploadPhoto();
+    const payload = { player_name: state.name, photo_path: photoPath, score: state.score, total_questions: questions.length, time_seconds: timeSeconds };
+    const response = await fetch(`${supabase.url}/rest/v1/quiz_results`, { method: "POST", headers: apiHeaders({ "Content-Type": "application/json", Prefer: "return=representation" }), body: JSON.stringify(payload) });
+    if (!response.ok) throw new Error("Non sono riuscita a salvare il risultato.");
+    const rows = await response.json();
+    state.resultId = rows[0]?.id || null;
+  }
+
+  function renderLeaderboard(rows) {
+    const list = document.querySelector("#leaderboard-list");
+    list.replaceChildren();
+    rows.forEach((row, index) => {
+      const item = document.createElement("div"); item.className = `leaderboard-row${row.id === state.resultId ? " leaderboard-current" : ""}`;
+      const rank = document.createElement("span"); rank.className = "leaderboard-rank"; rank.textContent = index < 3 ? ["🥇", "🥈", "🥉"][index] : `${index + 1}.`;
+      const avatar = document.createElement(row.photo_path ? "img" : "span"); avatar.className = "leaderboard-avatar";
+      if (row.photo_path) { avatar.src = `${supabase.url}/storage/v1/object/public/quiz-photos/${encodeURIComponent(row.photo_path)}`; avatar.alt = ""; } else avatar.textContent = row.player_name.trim().charAt(0).toUpperCase();
+      const details = document.createElement("div"); details.className = "leaderboard-player"; const name = document.createElement("strong"); name.textContent = row.player_name; const time = document.createElement("small"); time.textContent = formatSeconds(row.time_seconds); details.append(name, time);
+      const score = document.createElement("span"); score.className = "leaderboard-score"; score.textContent = `${row.score}/${row.total_questions}`;
+      item.append(rank, avatar, details, score); list.append(item);
+    });
+  }
+
+  async function updateLeaderboard(timeSeconds) {
+    const status = document.querySelector("#leaderboard-status"); status.hidden = false; status.textContent = "Sto salvando il tuo risultato…";
+    try {
+      await saveResult(timeSeconds);
+      status.textContent = "Sto preparando la classifica…";
+      const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds&order=score.desc,time_seconds.asc,created_at.asc&limit=50`, { headers: apiHeaders() });
+      if (!response.ok) throw new Error("Non sono riuscita a caricare la classifica.");
+      renderLeaderboard(await response.json()); status.hidden = true;
+    } catch (error) { status.textContent = `${error.message} Controlla che la tabella e il bucket siano stati creati su Supabase.`; }
+  }
+
   function renderQuestion() {
     const question = questions[state.index];
     document.querySelector("#question-number").textContent = `Domanda ${state.index + 1} di ${questions.length}`;
@@ -89,6 +137,10 @@
     document.querySelector("#category").textContent = question.category;
     document.querySelector("#question-text").textContent = question.question;
     document.querySelector("#feedback").hidden = true;
+    const quizScreen = document.querySelector("#quiz");
+    quizScreen.classList.remove("question-enter");
+    void quizScreen.offsetWidth;
+    quizScreen.classList.add("question-enter");
     const answers = document.querySelector("#answers");
     answers.replaceChildren();
     question.answers.forEach((answer, index) => {
@@ -117,10 +169,14 @@
     document.querySelector("#feedback-text").textContent = question.comment || feedbackPools[type].pop() || (correct ? "Risposta corretta!" : "Risposta sbagliata!");
     document.querySelector("#next-button").firstChild.textContent = state.index === questions.length - 1 ? "Scopri il verdetto " : "Prossima domanda ";
     document.querySelector("#feedback").hidden = false;
+    if (window.matchMedia("(max-width: 600px)").matches) {
+      requestAnimationFrame(() => document.querySelector("#feedback").scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    }
   }
 
   function finish() {
     clearInterval(state.interval);
+    const timeSeconds = Math.floor((Date.now() - state.startedAt) / 1000);
     const percentage = Math.round((state.score / questions.length) * 100);
     let title, description;
     if (state.score === questions.length) { title = "Martina sotto mentite spoglie"; description = "Trenta su trenta. O sei la sua anima gemella, o sei letteralmente Martina con un altro nome."; }
@@ -139,13 +195,22 @@
     document.querySelector("#result-percentage").textContent = `${percentage}%`;
     document.querySelector("#progress-bar").style.width = "100%";
     showScreen("results");
+    updateLeaderboard(timeSeconds);
   }
+
+  document.querySelector("#player-photo").addEventListener("change", event => {
+    const photo = event.target.files[0]; const error = document.querySelector("#photo-error"); error.hidden = true;
+    if (!photo) { state.photo = null; return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type) || photo.size > 5 * 1024 * 1024) { state.photo = null; event.target.value = ""; error.textContent = "Scegli una foto JPG, PNG o WebP di massimo 5 MB."; error.hidden = false; return; }
+    state.photo = photo;
+    const preview = document.querySelector("#photo-preview"); preview.replaceChildren(); const image = document.createElement("img"); image.src = URL.createObjectURL(photo); image.alt = ""; preview.append(image);
+  });
 
   document.querySelector("#start-form").addEventListener("submit", event => {
     event.preventDefault();
     state.name = document.querySelector("#player-name").value.trim();
     if (!state.name) return;
-    state.index = 0; state.score = 0; state.startedAt = Date.now();
+    state.index = 0; state.score = 0; state.startedAt = Date.now(); state.resultId = null;
     feedbackPools = { positive: shuffled(positive), negative: shuffled(negative) };
     clearInterval(state.interval);
     document.querySelector("#timer").textContent = "00:00";
