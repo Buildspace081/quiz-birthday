@@ -2,7 +2,7 @@
   "use strict";
 
   const questions = window.MARTINA_QUESTIONS;
-  const screens = { welcome: document.querySelector("#welcome"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results") };
+  const screens = { welcome: document.querySelector("#welcome"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking") };
   const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, resultId: null };
   const supabase = window.MARTINA_SUPABASE;
   const positive = window.MARTINA_FEEDBACK?.positive || [
@@ -105,8 +105,7 @@
     state.resultId = rows[0]?.id || null;
   }
 
-  function renderLeaderboard(rows) {
-    const list = document.querySelector("#leaderboard-list");
+  function renderLeaderboard(rows, list = document.querySelector("#leaderboard-list")) {
     list.replaceChildren();
     rows.forEach((row, index) => {
       const item = document.createElement("div"); item.className = `leaderboard-row${row.id === state.resultId ? " leaderboard-current" : ""}`;
@@ -119,14 +118,18 @@
     });
   }
 
+  async function fetchLeaderboard() {
+    const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds&order=score.desc,time_seconds.asc,created_at.asc&limit=50`, { headers: apiHeaders() });
+    if (!response.ok) throw new Error("Non sono riuscita a caricare la classifica.");
+    return response.json();
+  }
+
   async function updateLeaderboard(timeSeconds) {
     const status = document.querySelector("#leaderboard-status"); status.hidden = false; status.textContent = "Sto salvando il tuo risultato…";
     try {
       await saveResult(timeSeconds);
       status.textContent = "Sto preparando la classifica…";
-      const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds&order=score.desc,time_seconds.asc,created_at.asc&limit=50`, { headers: apiHeaders() });
-      if (!response.ok) throw new Error("Non sono riuscita a caricare la classifica.");
-      renderLeaderboard(await response.json()); status.hidden = true;
+      renderLeaderboard(await fetchLeaderboard()); status.hidden = true;
     } catch (error) { status.textContent = `${error.message} Controlla che la tabella e il bucket siano stati creati su Supabase.`; }
   }
 
@@ -219,4 +222,12 @@
   });
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; state.index < questions.length ? renderQuestion() : finish(); });
   document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); document.querySelector("#player-name").focus(); });
+  document.querySelector("#open-leaderboard").addEventListener("click", async () => {
+    showScreen("ranking");
+    const status = document.querySelector("#ranking-status"); const list = document.querySelector("#ranking-list");
+    status.hidden = false; status.textContent = "Sto preparando la classifica…"; list.replaceChildren();
+    try { const rows = await fetchLeaderboard(); renderLeaderboard(rows, list); status.hidden = rows.length > 0; if (!rows.length) status.textContent = "Nessuna ha ancora completato il quiz. Puoi essere la prima!"; }
+    catch (error) { status.textContent = error.message; }
+  });
+  document.querySelector("#back-from-ranking").addEventListener("click", () => showScreen("welcome"));
 })();
