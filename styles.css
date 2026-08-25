@@ -280,6 +280,7 @@ input:focus { border-color: var(--cherry); }
 .feedback-bubble { position: relative; padding: 18px 19px 19px; }
 .feedback-bubble::before { position: absolute; top: -9px; left: 23px; width: 18px; height: 18px; background: #fffafc; content: ""; transform: rotate(45deg); }
 .feedback p { margin: 0; color: #64555d; font-size: 14px; font-style: italic; line-height: 1.7; }
+.reaction-next { min-height: 47px; margin-top: 14px; padding: 12px 15px; border-radius: 11px; font-size: 13px; }
 
 @keyframes reaction-arrive {
   from { opacity: 0; transform: translateY(11px) scale(.985); }
@@ -289,6 +290,10 @@ input:focus { border-color: var(--cherry); }
 .result-greeting { margin: 0 0 14px; color: var(--sage); font-size: 14px; font-style: italic; }
 .result-card { position: relative; padding: 33px 25px 7px; border: 1px solid #f0e5e8; border-radius: 23px; background: #ffffffbf; box-shadow: 0 12px 35px #30252a0d; }
 .result-decoration { position: absolute; top: -13px; left: 50%; padding: 2px 12px; border-radius: 15px; background: var(--paper); color: var(--cherry); font-size: 16px; white-space: nowrap; transform: translateX(-50%); }
+.result-reaction { display: block; width: 100%; height: clamp(195px, 50vw, 280px); margin: 19px auto 0; border-radius: 17px; object-fit: cover; object-position: center 37%; }
+.result-reaction[hidden] { display: none; }
+.result-reaction:not([hidden]) + .score-circle { width: 116px; height: 116px; margin: 25px auto; }
+.result-reaction:not([hidden]) + .score-circle span { font-size: 46px; }
 
 .score-circle {
   position: relative;
@@ -337,6 +342,8 @@ input:focus { border-color: var(--cherry); }
 .participant-avatar { display: grid; width: 86px; height: 86px; margin: 0 auto 13px; place-items: center; border: 3px solid #f4e7eb; border-radius: 50%; background: #f2e5e9; color: var(--cherry); font-size: 31px; object-fit: cover; }
 .participant-card h2 { margin: 0 0 7px; font-size: 35px; }
 .participant-summary { margin: 0; color: var(--muted); font-size: 12px; }
+.participant-reaction-label { margin: 20px 0 9px; color: var(--sage); font-size: 11px; font-style: italic; }
+.participant-reaction { display: block; width: 100%; height: clamp(190px, 48vw, 260px); border-radius: 15px; object-fit: cover; object-position: center 37%; }
 .participant-answers-heading { margin-bottom: 14px; }
 .participant-answers-heading .eyebrow { margin-bottom: 5px; }
 .participant-answers-heading h3 { margin: 0; font-family: "Bodoni 72", Didot, Baskerville, serif; font-size: 25px; font-weight: 400; }
@@ -381,7 +388,7 @@ input:focus { border-color: var(--cherry); }
   .result-details { gap: 10px; }
   .result-card { padding: 29px 17px 5px; }
   .answer { min-height: 56px; padding: 12px; }
-  .feedback-image { height: 210px; }
+  .feedback-image { height: 175px; }
   .ranking { margin-top: clamp(20px, 6vh, 48px); }
   .ranking-intro { margin-top: 19px; }
   .ranking .leaderboard { margin-top: 23px; }
@@ -398,7 +405,7 @@ input:focus { border-color: var(--cherry); }
   .portrait { width: 142px; }
   .portrait-scene { width: 275px; }
   .portrait-note { right: -1px; font-size: 9px; }
-  .feedback-image { height: 180px; }
+  .feedback-image { height: 155px; }
   .screen { padding-top: 16px; }
 }
 

@@ -132,6 +132,11 @@
     const name = document.createElement("h2"); name.textContent = row.player_name;
     const summary = document.createElement("p"); summary.className = "participant-summary"; summary.textContent = `${row.score} risposte giuste su ${row.total_questions} · ${formatSeconds(row.time_seconds)}`;
     card.append(avatar, name, summary);
+    if (row.score < 10) {
+      const reactionLabel = document.createElement("p"); reactionLabel.className = "participant-reaction-label"; reactionLabel.textContent = "Pensavo fossimo amiche. Evidentemente pensavo male.";
+      const reaction = document.createElement("img"); reaction.className = "participant-reaction"; reaction.src = "assets/martina-risultato-peggiore.png"; reaction.alt = "La reaction di Martina al risultato";
+      card.append(reactionLabel, reaction);
+    }
     const list = document.querySelector("#participant-answers"); list.replaceChildren();
     if (!Array.isArray(row.answers) || !row.answers.length) { const empty = document.createElement("p"); empty.className = "leaderboard-status"; empty.textContent = "Il dettaglio non è disponibile: questo quiz è stato completato prima dell’aggiornamento."; list.append(empty); }
     else row.answers.forEach((answer, index) => {
@@ -204,18 +209,22 @@
     clearInterval(state.interval);
     const timeSeconds = Math.floor((Date.now() - state.startedAt) / 1000);
     const percentage = Math.round((state.score / questions.length) * 100);
-    let title, description;
-    if (state.score === questions.length) { title = "Martina sotto mentite spoglie"; description = "Trenta su trenta. O sei la sua anima gemella, o sei letteralmente Martina con un altro nome."; }
-    else if (state.score >= 27) { title = "Anima gemella certificata"; description = "Conosci Martina meglio di quanto lei conosca sé stessa. Leggermente inquietante, ma anche molto tenero."; }
-    else if (state.score >= 22) { title = "Bestie di altissimo livello"; description = "Sei chiaramente tra le persone fidate. Qualche dettaglio ti sfugge, ma il posto nel gruppo è assolutamente salvo."; }
+    let title, description, reactionImage = "";
+    if (state.score === questions.length) { title = "Congratulazioni, sei la mia migliore amica: hai vinto me. Mi dispiace."; description = "Trenta su trenta. O sei la sua anima gemella, o sei letteralmente Martina con un altro nome."; }
+    else if (state.score >= 27) { title = "Sai così tante cose su di me che ormai non posso più liberarmi di te."; description = "Conosci Martina meglio di quanto lei conosca sé stessa. Leggermente inquietante, ma anche molto tenero."; }
+    else if (state.score >= 22) { title = "Sei ufficialmente nel mio gruppo ristretto. Quello dove si sparla di tutte."; description = "Sei chiaramente tra le persone fidate. Qualche dettaglio ti sfugge, ma il posto nel gruppo è assolutamente salvo."; }
     else if (state.score >= 16) { title = "Bestie"; description = "Le basi ci sono e pure qualche colpo di genio. Ti manca soltanto un ripasso dei vocali più importanti."; }
     else if (state.score >= 10) { title = "Amica, con riserva"; description = "Ci sono margini di miglioramento. Forse durante gli ultimi aperitivi stavi seguendo più lo spritz che Martina."; }
-    else { title = "Ma vi conoscete davvero?"; description = "Martina chiede gentilmente nome, cognome e da quanto tempo vi frequentate. Perché qualcosa non torna."; }
+    else { title = "Pensavo fossimo amiche. Evidentemente pensavo male."; description = "Martina chiede gentilmente nome, cognome e da quanto tempo vi frequentate. Perché qualcosa non torna."; reactionImage = "assets/martina-risultato-peggiore.png"; }
     document.querySelector("#score-value").textContent = state.score;
     document.querySelector("#result-greeting").textContent = `${state.name}, abbiamo bisogno di parlare…`;
     document.querySelector("#score-circle small").textContent = `su ${questions.length}`;
     document.querySelector("#result-title").textContent = title;
     document.querySelector("#result-description").textContent = description;
+    const resultReaction = document.querySelector("#result-reaction");
+    resultReaction.hidden = !reactionImage;
+    if (reactionImage) resultReaction.src = reactionImage;
+    else resultReaction.removeAttribute("src");
     document.querySelector("#result-name").textContent = state.name;
     document.querySelector("#result-time").textContent = elapsed();
     document.querySelector("#result-percentage").textContent = `${percentage}%`;
@@ -255,7 +264,7 @@
     state.interval = setInterval(() => { document.querySelector("#timer").textContent = elapsed(); }, 1000);
     renderQuestion(); showScreen("quiz");
   });
-  document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; state.index < questions.length ? renderQuestion() : finish(); });
+  document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; state.index < questions.length ? renderQuestion() : finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); });
   document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
   document.querySelector("#open-leaderboard").addEventListener("click", async () => {
