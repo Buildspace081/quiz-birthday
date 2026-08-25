@@ -2,7 +2,7 @@
   "use strict";
 
   const questions = window.MARTINA_QUESTIONS;
-  const screens = { welcome: document.querySelector("#welcome"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking") };
+  const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking") };
   const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, resultId: null };
   const supabase = window.MARTINA_SUPABASE;
   const positive = window.MARTINA_FEEDBACK?.positive || [
@@ -222,7 +222,9 @@
     renderQuestion(); showScreen("quiz");
   });
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; state.index < questions.length ? renderQuestion() : finish(); });
-  document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); document.querySelector("#player-name").focus(); });
+  document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); });
+  document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); requestAnimationFrame(() => document.querySelector("#player-name").focus()); });
+  document.querySelector("#back-from-profile").addEventListener("click", () => showScreen("welcome"));
   document.querySelector("#open-leaderboard").addEventListener("click", async () => {
     showScreen("ranking");
     const status = document.querySelector("#ranking-status"); const list = document.querySelector("#ranking-list");
