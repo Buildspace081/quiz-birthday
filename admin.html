@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Martina Friendship Game</title>
+    <link rel="stylesheet" href="admin.css" />
+    <script src="questions.js" defer></script>
+    <script src="feedback.js" defer></script>
+    <script src="admin.js" defer></script>
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header"><div><p class="eyebrow">DIETRO LE QUINTE</p><h1>Il quiz di Martina</h1><p class="subtitle">Modifica tutto qui. Quando salvi, i file del progetto si aggiornano automaticamente.</p></div><a class="preview-link" href="index.html" target="_blank">Apri il quiz ↗</a></header>
+      <nav class="tabs"><button class="tab active" data-tab="questions" type="button">Domande <span id="question-count"></span></button><button class="tab" data-tab="positive" type="button">Risposte corrette <span id="positive-count"></span></button><button class="tab" data-tab="negative" type="button">Risposte sbagliate <span id="negative-count"></span></button></nav>
+      <section id="questions-panel" class="panel"><div class="section-heading"><div><h2>Domande del quiz</h2><p>Scrivi la domanda, completa le quattro risposte e seleziona quella corretta.</p></div><button id="add-question" class="secondary-button" type="button">+ Aggiungi domanda</button></div><div id="question-list"></div></section>
+      <section id="positive-panel" class="panel" hidden><div class="section-heading"><div><h2>Quando indovinano</h2><p>Le frasi vengono mescolate a ogni partita.</p></div><button class="secondary-button add-feedback" data-type="positive" type="button">+ Aggiungi frase</button></div><div id="positive-list" class="feedback-list"></div></section>
+      <section id="negative-panel" class="panel" hidden><div class="section-heading"><div><h2>Quando sbagliano</h2><p>Qui puoi dare libero sfogo alla cattiveria affettuosa.</p></div><button class="secondary-button add-feedback" data-type="negative" type="button">+ Aggiungi frase</button></div><div id="negative-list" class="feedback-list"></div></section>
+      <div class="save-bar"><p id="save-status">Nessuna modifica in sospeso</p><button id="save-button" type="button">Salva modifiche</button></div>
+    </main>
+  </body>
+</html>

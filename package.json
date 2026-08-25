@@ -1,0 +1,9 @@
+{
+  "name": "martina-friendship-game",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "admin": "node server.js",
+    "start": "node server.js"
+  }
+}

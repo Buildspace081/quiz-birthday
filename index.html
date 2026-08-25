@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fffdfb" />
+    <title>Quanto conosci Martina?</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="questions.js" defer></script>
+    <script src="feedback.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar"><span class="edition">friendship edition <span aria-hidden="true">✿</span></span></header>
+      <section id="welcome" class="screen welcome">
+        <div class="portrait-scene"><span class="portrait-note" aria-hidden="true">ti tiene d’occhio ↘</span><div class="portrait"><img src="assets/martina-compleanno.png" alt="Martina da bambina durante il suo compleanno" /><span class="portrait-caption">Mini marti che ti giudica</span></div><span class="portrait-heart" aria-hidden="true">♡</span></div>
+        <p class="eyebrow">IL TEST CHE NESSUNA HA CHIESTO</p>
+        <h1>Quanto conosci <em>davvero</em> Martina?</h1>
+        <p class="intro">Vediamo chi ascolta davvero i vocali e chi, invece, ha sempre fatto finta.</p>
+        <form id="start-form"><label for="player-name">Prima firmati qui sotto ↓</label><input id="player-name" name="name" maxlength="32" placeholder="Come ti chiami?" required autocomplete="given-name" /><button class="button" type="submit">Ok, sono pronta <span>→</span></button></form>
+        <p class="footnote">fatto con affetto e un pizzico di cattiveria ♡</p>
+      </section>
+      <section id="quiz" class="screen quiz" hidden>
+        <div class="quiz-meta"><span id="question-number"></span><span id="timer">00:00</span></div>
+        <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+        <p id="category" class="eyebrow"></p>
+        <h2 id="question-text"></h2>
+        <div id="answers" class="answers"></div>
+        <div id="feedback" class="feedback" hidden><div class="feedback-message"><img class="feedback-avatar" src="assets/martina-compleanno.png" alt="" /><div class="feedback-bubble"><span class="feedback-author">mini marti dice</span><p id="feedback-text"></p></div></div><button id="next-button" class="button" type="button">Prossima domanda <span>→</span></button></div>
+      </section>
+      <section id="results" class="screen results" hidden>
+        <p id="result-greeting" class="result-greeting"></p>
+        <p class="eyebrow">il verdetto, senza possibilità di appello</p>
+        <div id="score-circle" class="score-circle"><span id="score-value"></span><small>su 30</small></div>
+        <h2 id="result-title"></h2>
+        <p id="result-description" class="intro"></p>
+        <div class="result-details"><div><span>Giocatrice</span><strong id="result-name"></strong></div><div><span>Tempo</span><strong id="result-time"></strong></div><div><span>Precisione</span><strong id="result-percentage"></strong></div></div>
+        <button id="restart-button" class="button" type="button">Riprova, se hai coraggio <span>↻</span></button>
+      </section>
+    </main>
+  </body>
+</html>
