@@ -5,6 +5,13 @@
   const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), participant: document.querySelector("#participant") };
   const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, resultId: null, answers: [], previousScreen: "ranking" };
   const supabase = window.MARTINA_SUPABASE;
+  const defaultReactionImage = "assets/martina-compleanno.png";
+  const negativeReactionImages = [
+    "assets/martina-errore-1.jpeg",
+    "assets/martina-errore-2.jpeg",
+    "assets/martina-errore-3.jpeg",
+    "assets/martina-errore-4.jpeg"
+  ];
   const positive = window.MARTINA_FEEDBACK?.positive || [
     "Esatto. Martina approverebbe con un cenno molto teatrale.",
     "Risposta giusta: il vostro gruppo WhatsApp può stare tranquillo.",
@@ -70,6 +77,7 @@
     "No. Per fortuna il test non prevede l’espulsione dal gruppo."
   ];
   let feedbackPools = { positive: [], negative: [] };
+  let negativeImagePool = [];
 
   function shuffled(messages) {
     const result = [...messages];
@@ -197,6 +205,12 @@
     if (!correct) buttons[index].classList.add("incorrect");
     const type = correct ? "positive" : "negative";
     if (!feedbackPools[type].length) feedbackPools[type] = shuffled(correct ? positive : negative);
+    const feedbackImage = document.querySelector("#feedback-image");
+    if (correct) feedbackImage.src = defaultReactionImage;
+    else {
+      if (!negativeImagePool.length) negativeImagePool = shuffled(negativeReactionImages);
+      feedbackImage.src = negativeImagePool.pop();
+    }
     document.querySelector("#feedback-text").textContent = question.comment || feedbackPools[type].pop() || (correct ? "Risposta corretta!" : "Risposta sbagliata!");
     document.querySelector("#next-button").firstChild.textContent = state.index === questions.length - 1 ? "Scopri il verdetto " : "Prossima domanda ";
     document.querySelector("#feedback").hidden = false;
@@ -259,6 +273,7 @@
     if (!state.photo) { const error = document.querySelector("#photo-error"); error.textContent = "Prima la foto: in classifica vogliamo riconoscerti!"; error.hidden = false; return; }
     state.index = 0; state.score = 0; state.startedAt = Date.now(); state.resultId = null; state.answers = [];
     feedbackPools = { positive: shuffled(positive), negative: shuffled(negative) };
+    negativeImagePool = shuffled(negativeReactionImages);
     clearInterval(state.interval);
     document.querySelector("#timer").textContent = "00:00";
     state.interval = setInterval(() => { document.querySelector("#timer").textContent = elapsed(); }, 1000);
