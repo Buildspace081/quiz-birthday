@@ -12,6 +12,38 @@
     "assets/martina-errore-3.jpeg",
     "assets/martina-errore-4.jpeg"
   ];
+  const correctReactionImages = [
+    "https://loremflickr.com/900/700/breakfast,croissant?lock=101",
+    "https://loremflickr.com/900/700/autumn,leaves?lock=102",
+    "https://loremflickr.com/900/700/gerbera,flower?lock=103",
+    "https://loremflickr.com/900/700/jake,gyllenhaal,actor?lock=104",
+    "https://loremflickr.com/900/700/dog,portrait?lock=105",
+    "https://loremflickr.com/900/700/luxury,perfume?lock=106",
+    "https://loremflickr.com/900/700/romeo,juliet,ballet?lock=107",
+    "https://loremflickr.com/900/700/cafe,breakfast?lock=108",
+    "https://loremflickr.com/900/700/pozzuoli,italy,square?lock=109",
+    "https://loremflickr.com/900/700/scotland,highland,cow?lock=110",
+    "https://loremflickr.com/900/700/microphone,voice?lock=111",
+    "https://loremflickr.com/900/700/golden,retriever?lock=112",
+    "https://loremflickr.com/900/700/cinema,classic,film?lock=113",
+    "https://loremflickr.com/900/700/icecream,dessert?lock=114",
+    "https://loremflickr.com/900/700/pepsi,cola?lock=115",
+    "https://loremflickr.com/900/700/vintage,blazer,fashion?lock=116",
+    "https://loremflickr.com/900/700/cafe,city,cinema?lock=117",
+    "https://loremflickr.com/900/700/hans,zimmer,concert?lock=118",
+    "https://loremflickr.com/900/700/cinema,emotional,film?lock=119",
+    "https://loremflickr.com/900/700/millefoglie,pastry?lock=120",
+    "https://loremflickr.com/900/700/film,review,cinema?lock=121",
+    "https://loremflickr.com/900/700/poetry,books?lock=122",
+    "https://loremflickr.com/900/700/breakfast,cafe,coffee?lock=123",
+    "https://loremflickr.com/900/700/strawberry,forest,fairytale?lock=124",
+    "https://loremflickr.com/900/700/trentino,mountains,friends?lock=125",
+    "https://loremflickr.com/900/700/hug,friends?lock=126",
+    "https://loremflickr.com/900/700/phone,call,escape?lock=127",
+    "https://loremflickr.com/900/700/crush,love,romance?lock=128",
+    "https://loremflickr.com/900/700/solitude,cinema,walk?lock=129",
+    "https://loremflickr.com/900/700/romantic,comedy,movie?lock=130"
+  ];
   const positive = window.MARTINA_FEEDBACK?.positive || [
     "Esatto. Martina approverebbe con un cenno molto teatrale.",
     "Risposta giusta: il vostro gruppo WhatsApp può stare tranquillo.",
@@ -175,7 +207,7 @@
     document.querySelector("#category").textContent = question.category;
     document.querySelector("#question-text").textContent = question.question;
     document.querySelector("#feedback").hidden = true;
-    document.querySelector("#feedback").classList.remove("feedback-wrong");
+    document.querySelector("#feedback").classList.remove("feedback-overlay");
     const quizScreen = document.querySelector("#quiz");
     quizScreen.classList.remove("question-enter");
     void quizScreen.offsetWidth;
@@ -205,10 +237,10 @@
     buttons[question.correct].classList.add("correct");
     if (!correct) buttons[index].classList.add("incorrect");
     const type = correct ? "positive" : "negative";
-    document.querySelector("#feedback").classList.toggle("feedback-wrong", !correct);
+    document.querySelector("#feedback").classList.add("feedback-overlay");
     if (!feedbackPools[type].length) feedbackPools[type] = shuffled(correct ? positive : negative);
     const feedbackImage = document.querySelector("#feedback-image");
-    if (correct) feedbackImage.src = defaultReactionImage;
+    if (correct) feedbackImage.src = correctReactionImages[state.index];
     else {
       if (!negativeImagePool.length) negativeImagePool = shuffled(negativeReactionImages);
       feedbackImage.src = negativeImagePool.pop();
@@ -216,9 +248,6 @@
     document.querySelector("#feedback-text").textContent = question.comment || feedbackPools[type].pop() || (correct ? "Risposta corretta!" : "Risposta sbagliata!");
     document.querySelector("#next-button").firstChild.textContent = state.index === questions.length - 1 ? "Scopri il verdetto " : "Prossima domanda ";
     document.querySelector("#feedback").hidden = false;
-    if (correct && window.matchMedia("(max-width: 600px)").matches) {
-      requestAnimationFrame(() => document.querySelector("#feedback").scrollIntoView({ behavior: "smooth", block: "nearest" }));
-    }
   }
 
   function finish() {
