@@ -175,6 +175,7 @@
     document.querySelector("#category").textContent = question.category;
     document.querySelector("#question-text").textContent = question.question;
     document.querySelector("#feedback").hidden = true;
+    document.querySelector("#feedback").classList.remove("feedback-wrong");
     const quizScreen = document.querySelector("#quiz");
     quizScreen.classList.remove("question-enter");
     void quizScreen.offsetWidth;
@@ -204,6 +205,7 @@
     buttons[question.correct].classList.add("correct");
     if (!correct) buttons[index].classList.add("incorrect");
     const type = correct ? "positive" : "negative";
+    document.querySelector("#feedback").classList.toggle("feedback-wrong", !correct);
     if (!feedbackPools[type].length) feedbackPools[type] = shuffled(correct ? positive : negative);
     const feedbackImage = document.querySelector("#feedback-image");
     if (correct) feedbackImage.src = defaultReactionImage;
@@ -214,7 +216,7 @@
     document.querySelector("#feedback-text").textContent = question.comment || feedbackPools[type].pop() || (correct ? "Risposta corretta!" : "Risposta sbagliata!");
     document.querySelector("#next-button").firstChild.textContent = state.index === questions.length - 1 ? "Scopri il verdetto " : "Prossima domanda ";
     document.querySelector("#feedback").hidden = false;
-    if (window.matchMedia("(max-width: 600px)").matches) {
+    if (correct && window.matchMedia("(max-width: 600px)").matches) {
       requestAnimationFrame(() => document.querySelector("#feedback").scrollIntoView({ behavior: "smooth", block: "nearest" }));
     }
   }

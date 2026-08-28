@@ -285,6 +285,13 @@ input:focus { border-color: var(--cherry); }
 .feedback-bubble::before { position: absolute; top: -9px; left: 23px; width: 18px; height: 18px; background: #fffafc; content: ""; transform: rotate(45deg); }
 .feedback p { margin: 0; color: #64555d; font-size: 14px; font-style: italic; line-height: 1.7; }
 .reaction-next { min-height: 47px; margin-top: 14px; padding: 12px 15px; border-radius: 11px; font-size: 13px; }
+.feedback-wrong { position: fixed; z-index: 100; inset: 0; display: grid; overflow-y: auto; place-items: center; padding: 22px; background: #241e22d9; backdrop-filter: blur(7px); }
+.feedback-wrong[hidden] { display: none; }
+.feedback-wrong .feedback-card { width: min(100%, 420px); max-height: calc(100dvh - 44px); overflow-y: auto; border: 0; border-radius: 22px; background: #fffafc; box-shadow: 0 22px 70px #120d105c; }
+.feedback-wrong .feedback-image { width: 100%; height: auto; max-height: calc(100dvh - 190px); object-fit: contain; object-position: center; background: #171416; }
+.feedback-wrong .feedback-bubble { padding: 17px 18px 18px; }
+.feedback-wrong .feedback-bubble::before { display: none; }
+.feedback-wrong .reaction-next { margin-top: 13px; }
 
 @keyframes reaction-arrive {
   from { opacity: 0; transform: translateY(11px) scale(.985); }
@@ -393,6 +400,10 @@ input:focus { border-color: var(--cherry); }
   .result-card { padding: 29px 17px 5px; }
   .answer { min-height: 56px; padding: 12px; }
   .feedback-image { height: 175px; }
+  .feedback-wrong { padding: 12px; }
+  .feedback-wrong .feedback-card { width: min(100%, 390px); max-height: calc(100dvh - 24px); }
+  .feedback-wrong .feedback-image { height: auto; max-height: calc(100dvh - 176px); }
+  .feedback-wrong .feedback-bubble { padding: 14px 15px 15px; }
   .ranking { margin-top: clamp(20px, 6vh, 48px); }
   .ranking-intro { margin-top: 19px; }
   .ranking .leaderboard { margin-top: 23px; }
@@ -410,6 +421,7 @@ input:focus { border-color: var(--cherry); }
   .portrait-scene { width: 275px; }
   .portrait-note { right: -1px; font-size: 9px; }
   .feedback-image { height: 155px; }
+  .feedback-wrong .feedback-image { height: auto; max-height: calc(100dvh - 168px); }
   .screen { padding-top: 16px; }
 }
 
