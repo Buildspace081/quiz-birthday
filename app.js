@@ -3,7 +3,7 @@
 
   const questions = window.MARTINA_QUESTIONS;
   const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), participant: document.querySelector("#participant") };
-  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, resultId: null, answers: [], previousScreen: "ranking" };
+  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", resultId: null, answers: [], previousScreen: "ranking" };
   const supabase = window.MARTINA_SUPABASE;
   const defaultReactionImage = "assets/martina-compleanno.png";
   const negativeReactionImages = [
@@ -35,13 +35,13 @@
     "assets/risposta20.jpeg",
     "assets/risposta21.jpeg",
     "assets/risposta22.jpeg",
-    "assets/risposta23.jpg",
+    "assets/risposta11.jpeg",
     "assets/risposta24.png",
-    "assets/risposta25.jpeg",
-    "assets/risposta26.png",
+    "assets/risposta8.jpeg",
+    "assets/risposta17.jpeg",
     "assets/risposta27.jpg",
     "assets/risposta28.jpeg",
-    "https://loremflickr.com/900/700/solitude,cinema,walk?lock=129",
+    "assets/rispostacorretta.jpeg",
     "assets/risposta17.jpeg"
   ];
   const positive = window.MARTINA_FEEDBACK?.positive || [
@@ -174,8 +174,7 @@
     card.append(avatar, name, summary);
     if (row.score < 10) {
       const reactionLabel = document.createElement("p"); reactionLabel.className = "participant-reaction-label"; reactionLabel.textContent = "Forse è il caso di presentarci di nuovo. Piacere, Martina.";
-      const reaction = document.createElement("img"); reaction.className = "participant-reaction"; reaction.src = "assets/martina-risultato-peggiore.png"; reaction.alt = "La reaction di Martina al risultato";
-      card.append(reactionLabel, reaction);
+      card.append(reactionLabel);
     }
     const list = document.querySelector("#participant-answers"); list.replaceChildren();
     if (!Array.isArray(row.answers) || !row.answers.length) { const empty = document.createElement("p"); empty.className = "leaderboard-status"; empty.textContent = "Il dettaglio non è disponibile: questo quiz è stato completato prima dell’aggiornamento."; list.append(empty); }
@@ -254,22 +253,21 @@
     clearInterval(state.interval);
     const timeSeconds = Math.floor((Date.now() - state.startedAt) / 1000);
     const percentage = Math.round((state.score / questions.length) * 100);
-    let title, description, reactionImage = "";
-    if (state.score === questions.length) { title = "INTELLIGENTE E SI APPLICA PURE"; description = "Ma tu esattamente perché sai tutte queste cose? Inizio a pensare di aver parlato un po’ troppo in questi anni. Il titolo di migliore amica, per il momento, è salvo."; }
-    else if (state.score >= 26) { title = "IL LIVELLO DI ATTENZIONE È PREOCCUPANTE…"; description = "Complimenti, hai ufficialmente troppe informazioni su di me. A questo punto non è più amicizia, è archivio storico."; }
-    else if (state.score >= 21) { title = "CONOSCENZA DI MARTINA: PERICOLOSAMENTE AVANZATA"; description = "Anni di informazioni inutili finalmente ripagati. Manca ancora qualche informazione completamente inutile per raggiungere la perfezione."; }
-    else if (state.score >= 16) { title = "INTELLIGENTE MA NON SI APPLICA"; description = "Direi che possiamo continuare a frequentarci. Qualche lacuna grave, ma niente di irreparabile."; }
-    else if (state.score >= 10) { title = "POTEVI FARE DI PIÙ"; description = "Evidentemente è il caso di rivedere la tua memoria selettiva ;)"; }
-    else { title = "I RISULTATI PARLANO CHIARO"; description = "Forse è il caso di presentarci di nuovo. Piacere, Martina."; reactionImage = "assets/martina-risultato-peggiore.png"; }
+    let title, description;
+    if (state.score === questions.length) { title = "INTELLIGENTE E SI APPLICA PURE"; description = "Ma tu esattamente perché sai tutte queste cose? Inizio a pensare di aver parlato un po’ troppo in questi anni. Evidentemente tutto questo tempo insieme è servito a qualcosa: il titolo di migliore amica, per il momento, è salvo. Hai vinto me. Mi dispiace."; }
+    else if (state.score >= 26) { title = "IL LIVELLO DI ATTENZIONE È PREOCCUPANTE…"; description = "Complimenti, hai ufficialmente troppe informazioni su di me. A questo punto non è più amicizia, è archivio storico. Se un giorno perdessi la memoria, potresti tranquillamente ricostruirmi la vita."; }
+    else if (state.score >= 21) { title = "CONOSCENZA DI MARTINA: PERICOLOSAMENTE AVANZATA"; description = "Anni di informazioni inutili finalmente ripagati. Sei entrata nella zona in cui ricordi dettagli che forse persino io avevo rimosso. Manca ancora qualche informazione completamente inutile per raggiungere la perfezione."; }
+    else if (state.score >= 16) { title = "INTELLIGENTE MA NON SI APPLICA"; description = "Direi che possiamo continuare a frequentarci. Qualche lacuna grave, ma niente di irreparabile. Hai seguito le lezioni, ma evidentemente ogni tanto eri assente proprio nei capitoli fondamentali."; }
+    else if (state.score >= 10) { title = "POTEVI FARE DI PIÙ"; description = "Evidentemente è il caso di rivedere la tua memoria selettiva ;) Qualcosa sai, ma troppe informazioni fondamentali sono finite nel cestino. Ti concedo un ripasso intensivo davanti a un aperitivo."; }
+    else { title = "Forse è il caso di presentarci di nuovo. Piacere, Martina."; description = "Nove risposte giuste o meno e una certezza: in tutti questi anni, evidentemente, parlavo da sola. Ricominciamo dalle basi."; }
     document.querySelector("#score-value").textContent = state.score;
     document.querySelector("#result-greeting").textContent = `${state.name}, abbiamo bisogno di parlare…`;
-    document.querySelector("#score-circle small").textContent = `su ${questions.length}`;
+    document.querySelector("#score-total").textContent = questions.length;
+    const resultPhoto = document.querySelector("#result-player-photo");
+    resultPhoto.src = state.photoUrl || URL.createObjectURL(state.photo);
+    resultPhoto.alt = `Foto di ${state.name}`;
     document.querySelector("#result-title").textContent = title;
     document.querySelector("#result-description").textContent = description;
-    const resultReaction = document.querySelector("#result-reaction");
-    resultReaction.hidden = !reactionImage;
-    if (reactionImage) resultReaction.src = reactionImage;
-    else resultReaction.removeAttribute("src");
     document.querySelector("#result-name").textContent = state.name;
     document.querySelector("#result-time").textContent = elapsed();
     document.querySelector("#result-percentage").textContent = `${percentage}%`;
@@ -291,7 +289,9 @@
     if (!photo) { state.photo = null; updateProfileForm(); return; }
     if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type) || photo.size > 5 * 1024 * 1024) { state.photo = null; event.target.value = ""; error.textContent = "Scegli una foto JPG, PNG o WebP di massimo 5 MB."; error.hidden = false; updateProfileForm(); return; }
     state.photo = photo;
-    const preview = document.querySelector("#photo-preview"); preview.replaceChildren(); const image = document.createElement("img"); image.src = URL.createObjectURL(photo); image.alt = ""; preview.append(image);
+    if (state.photoUrl) URL.revokeObjectURL(state.photoUrl);
+    state.photoUrl = URL.createObjectURL(photo);
+    const preview = document.querySelector("#photo-preview"); preview.replaceChildren(); const image = document.createElement("img"); image.src = state.photoUrl; image.alt = ""; preview.append(image);
     document.querySelector("#photo-caption").textContent = "Perfetta: in classifica farai faville.";
     document.querySelector(".photo-upload").classList.add("photo-ready");
     updateProfileForm();
