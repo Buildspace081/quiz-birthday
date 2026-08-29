@@ -14,27 +14,27 @@
   ];
   const correctReactionImages = [
     "assets/risposta1.jpeg",
-    "assets/risposta2.jpg",
+    "assets/risposta2.jpeg",
     "assets/risposta3.jpeg",
-    "assets/risposta4.jpg",
+    "assets/risposta4.jpeg",
     "assets/risposta5.jpeg",
     "assets/risposta6.jpg",
     "assets/risposta7.jpeg",
     "assets/risposta8.jpeg",
-    "assets/risposta9.jpg",
+    "assets/risposta9.jpeg",
     "assets/risposta10.jpg",
-    "assets/risposta11.webp",
+    "assets/risposta11.jpeg",
     "assets/risposta12.jpg",
     "assets/risposta13.jpeg",
-    "assets/risposta14.webp",
+    "assets/risposta14.jpeg",
     "assets/risposta15.jpeg",
     "assets/risposta16.jpeg",
-    "assets/risposta17.webp",
+    "assets/risposta17.jpeg",
     "assets/risposta18.jpeg",
     "assets/risposta19.jpg",
     "assets/risposta20.jpeg",
-    "assets/risposta21.webp",
-    "assets/risposta22.jpg",
+    "assets/risposta21.jpeg",
+    "assets/risposta22.jpeg",
     "assets/risposta23.jpg",
     "assets/risposta24.png",
     "assets/risposta25.jpeg",
@@ -173,7 +173,7 @@
     const summary = document.createElement("p"); summary.className = "participant-summary"; summary.textContent = `${row.score} risposte giuste su ${row.total_questions} · ${formatSeconds(row.time_seconds)}`;
     card.append(avatar, name, summary);
     if (row.score < 10) {
-      const reactionLabel = document.createElement("p"); reactionLabel.className = "participant-reaction-label"; reactionLabel.textContent = "Pensavo fossimo amiche. Evidentemente pensavo male.";
+      const reactionLabel = document.createElement("p"); reactionLabel.className = "participant-reaction-label"; reactionLabel.textContent = "Forse è il caso di presentarci di nuovo. Piacere, Martina.";
       const reaction = document.createElement("img"); reaction.className = "participant-reaction"; reaction.src = "assets/martina-risultato-peggiore.png"; reaction.alt = "La reaction di Martina al risultato";
       card.append(reactionLabel, reaction);
     }
@@ -255,12 +255,12 @@
     const timeSeconds = Math.floor((Date.now() - state.startedAt) / 1000);
     const percentage = Math.round((state.score / questions.length) * 100);
     let title, description, reactionImage = "";
-    if (state.score === questions.length) { title = "Congratulazioni, sei la mia migliore amica: hai vinto me. Mi dispiace."; description = "Trenta su trenta. O sei la sua anima gemella, o sei letteralmente Martina con un altro nome."; }
-    else if (state.score >= 27) { title = "Sai così tante cose su di me che ormai non posso più liberarmi di te."; description = "Conosci Martina meglio di quanto lei conosca sé stessa. Leggermente inquietante, ma anche molto tenero."; }
-    else if (state.score >= 22) { title = "Sei ufficialmente nel mio gruppo ristretto. Quello dove si sparla di tutte."; description = "Sei chiaramente tra le persone fidate. Qualche dettaglio ti sfugge, ma il posto nel gruppo è assolutamente salvo."; }
-    else if (state.score >= 16) { title = "Ti salvo tra le amiche, ma sui vocali dobbiamo lavorare."; description = "Le basi ci sono e pure qualche colpo di genio. Ti manca soltanto un ripasso dei vocali più importanti."; }
-    else if (state.score >= 10) { title = "Ti voglio bene, ma forse frequenti un’altra Martina."; description = "Ci sono margini di miglioramento. Forse durante gli ultimi aperitivi stavi seguendo più lo spritz che Martina."; }
-    else { title = "Pensavo fossimo amiche. Evidentemente pensavo male."; description = "Martina chiede gentilmente nome, cognome e da quanto tempo vi frequentate. Perché qualcosa non torna."; reactionImage = "assets/martina-risultato-peggiore.png"; }
+    if (state.score === questions.length) { title = "INTELLIGENTE E SI APPLICA PURE"; description = "Ma tu esattamente perché sai tutte queste cose? Inizio a pensare di aver parlato un po’ troppo in questi anni. Il titolo di migliore amica, per il momento, è salvo."; }
+    else if (state.score >= 26) { title = "IL LIVELLO DI ATTENZIONE È PREOCCUPANTE…"; description = "Complimenti, hai ufficialmente troppe informazioni su di me. A questo punto non è più amicizia, è archivio storico."; }
+    else if (state.score >= 21) { title = "CONOSCENZA DI MARTINA: PERICOLOSAMENTE AVANZATA"; description = "Anni di informazioni inutili finalmente ripagati. Manca ancora qualche informazione completamente inutile per raggiungere la perfezione."; }
+    else if (state.score >= 16) { title = "INTELLIGENTE MA NON SI APPLICA"; description = "Direi che possiamo continuare a frequentarci. Qualche lacuna grave, ma niente di irreparabile."; }
+    else if (state.score >= 10) { title = "POTEVI FARE DI PIÙ"; description = "Evidentemente è il caso di rivedere la tua memoria selettiva ;)"; }
+    else { title = "I RISULTATI PARLANO CHIARO"; description = "Forse è il caso di presentarci di nuovo. Piacere, Martina."; reactionImage = "assets/martina-risultato-peggiore.png"; }
     document.querySelector("#score-value").textContent = state.score;
     document.querySelector("#result-greeting").textContent = `${state.name}, abbiamo bisogno di parlare…`;
     document.querySelector("#score-circle small").textContent = `su ${questions.length}`;
