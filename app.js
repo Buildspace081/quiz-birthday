@@ -29,7 +29,7 @@
     "assets/risposta14.jpeg",
     "assets/risposta15.jpeg",
     "assets/risposta16.jpeg",
-    "assets/risposta17.jpeg",
+    "assets/risposta30.webp",
     "assets/risposta18.jpeg",
     "assets/risposta19.jpg",
     "assets/risposta20.jpeg",
@@ -39,10 +39,10 @@
     "assets/risposta24.png",
     "assets/risposta25.jpeg",
     "assets/risposta26.png",
-    "assets/risposta27.jpeg",
+    "assets/risposta27.jpg",
     "assets/risposta28.jpeg",
     "https://loremflickr.com/900/700/solitude,cinema,walk?lock=129",
-    "assets/risposta30.webp"
+    "assets/risposta17.jpeg"
   ];
   const positive = window.MARTINA_FEEDBACK?.positive || [
     "Esatto. Martina approverebbe con un cenno molto teatrale.",
