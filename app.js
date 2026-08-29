@@ -159,9 +159,60 @@
   }
 
   async function fetchLeaderboard() {
-    const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds,answers&order=score.desc,time_seconds.asc,created_at.asc&limit=50`, { headers: apiHeaders() });
+    const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds,answers&order=score.desc,time_seconds.asc,created_at.asc&limit=1000`, { headers: apiHeaders() });
     if (!response.ok) throw new Error("Non sono riuscita a caricare la classifica.");
     return response.json();
+  }
+
+  function publicPhotoUrl(path) { return `${supabase.url}/storage/v1/object/public/quiz-photos/${encodeURIComponent(path)}`; }
+
+  function renderPodium(rows, target) {
+    target.replaceChildren();
+    const winners = rows.slice(0, 3);
+    if (!winners.length) { const empty = document.createElement("p"); empty.className = "leaderboard-status"; empty.textContent = "Il podio aspetta ancora le sue protagoniste."; target.append(empty); return; }
+    const order = winners.length === 1 ? [0] : winners.length === 2 ? [1, 0] : [1, 0, 2];
+    order.forEach(rankIndex => {
+      const row = winners[rankIndex];
+      const item = document.createElement("button"); item.type = "button"; item.className = `podium-place podium-place-${rankIndex + 1}`;
+      const medal = document.createElement("span"); medal.className = "podium-medal"; medal.textContent = ["🥇", "🥈", "🥉"][rankIndex];
+      const avatar = document.createElement(row.photo_path ? "img" : "span"); avatar.className = "podium-avatar";
+      if (row.photo_path) { avatar.src = publicPhotoUrl(row.photo_path); avatar.alt = `Foto di ${row.player_name}`; } else avatar.textContent = row.player_name.trim().charAt(0).toUpperCase();
+      const name = document.createElement("strong"); name.textContent = row.player_name;
+      const score = document.createElement("small"); score.textContent = `${row.score}/${row.total_questions}`;
+      item.append(medal, avatar, name, score); item.addEventListener("click", () => openParticipant(row, target.id === "result-podium" ? "results" : "ranking")); target.append(item);
+    });
+  }
+
+  function renderQuestionStats(rows, list, status) {
+    list.replaceChildren();
+    const validRows = rows.filter(row => Array.isArray(row.answers) && row.answers.length);
+    if (!validRows.length) { status.hidden = false; status.textContent = "Le statistiche appariranno appena arriveranno risultati con il dettaglio delle risposte."; return; }
+    status.hidden = true;
+    questions.forEach((question, questionIndex) => {
+      const collected = validRows.map(row => row.answers[questionIndex]).filter(answer => answer && answer.question === question.question);
+      if (!collected.length) return;
+      const correctCount = collected.filter(answer => answer.is_correct).length;
+      const wrongCount = collected.length - correctCount;
+      const correctPercentage = Math.round((correctCount / collected.length) * 100);
+      const wrongPercentage = 100 - correctPercentage;
+      const wrongChoices = collected.filter(answer => !answer.is_correct).reduce((counts, answer) => { counts[answer.selected_answer] = (counts[answer.selected_answer] || 0) + 1; return counts; }, {});
+      const mostChosenWrong = Object.entries(wrongChoices).sort((a, b) => b[1] - a[1])[0];
+      const card = document.createElement("article"); card.className = "question-stat-card";
+      const heading = document.createElement("div"); heading.className = "question-stat-heading";
+      const number = document.createElement("span"); number.textContent = `DOMANDA ${String(questionIndex + 1).padStart(2, "0")}`;
+      const title = document.createElement("h4"); title.textContent = question.question; heading.append(number, title);
+      const bar = document.createElement("div"); bar.className = "stat-bar"; bar.setAttribute("aria-label", `${correctPercentage}% corrette e ${wrongPercentage}% sbagliate`);
+      const correctBar = document.createElement("span"); correctBar.className = "stat-bar-correct"; correctBar.style.width = `${correctPercentage}%`; bar.append(correctBar);
+      const values = document.createElement("div"); values.className = "stat-values"; values.innerHTML = `<span><i class="stat-dot stat-dot-correct"></i><strong>${correctPercentage}%</strong> corrette <small>(${correctCount})</small></span><span><i class="stat-dot stat-dot-wrong"></i><strong>${wrongPercentage}%</strong> sbagliate <small>(${wrongCount})</small></span>`;
+      card.append(heading, bar, values);
+      if (mostChosenWrong) { const note = document.createElement("p"); note.className = "stat-note"; note.textContent = `L’errore più popolare: “${mostChosenWrong[0]}” (${mostChosenWrong[1]})`; card.append(note); }
+      list.append(card);
+    });
+  }
+
+  function renderCollectiveResults(rows, context) {
+    renderPodium(rows, document.querySelector(`#${context}-podium`));
+    renderQuestionStats(rows, document.querySelector(`#${context}-question-stats`), document.querySelector(`#${context}-stats-status`));
   }
 
   function openParticipant(row, previousScreen) {
@@ -195,7 +246,7 @@
     try {
       await saveResult(timeSeconds);
       status.textContent = "Sto preparando la classifica…";
-      renderLeaderboard(await fetchLeaderboard()); status.hidden = true;
+      const rows = await fetchLeaderboard(); renderLeaderboard(rows); renderCollectiveResults(rows, "result"); status.hidden = true;
     } catch (error) { status.textContent = `${error.message} Controlla che la tabella e il bucket siano stati creati su Supabase.`; }
   }
 
@@ -235,6 +286,7 @@
     buttons.forEach(button => { button.disabled = true; });
     buttons[question.correct].classList.add("correct");
     if (!correct) buttons[index].classList.add("incorrect");
+    if (!correct && "vibrate" in navigator) navigator.vibrate([80, 45, 120]);
     const type = correct ? "positive" : "negative";
     document.querySelector("#feedback").classList.add("feedback-overlay");
     if (!feedbackPools[type].length) feedbackPools[type] = shuffled(correct ? positive : negative);
@@ -247,6 +299,53 @@
     document.querySelector("#feedback-text").textContent = question.comment || feedbackPools[type].pop() || (correct ? "Risposta corretta!" : "Risposta sbagliata!");
     document.querySelector("#next-button").firstChild.textContent = state.index === questions.length - 1 ? "Scopri il verdetto " : "Prossima domanda ";
     document.querySelector("#feedback").hidden = false;
+  }
+
+  function loadImage(source) {
+    return new Promise((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = source; });
+  }
+
+  function drawCover(context, image, x, y, width, height) {
+    const scale = Math.max(width / image.width, height / image.height);
+    const sourceWidth = width / scale; const sourceHeight = height / scale;
+    context.drawImage(image, (image.width - sourceWidth) / 2, (image.height - sourceHeight) / 2, sourceWidth, sourceHeight, x, y, width, height);
+  }
+
+  function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
+    const words = text.split(/\s+/); const lines = []; let line = "";
+    words.forEach(word => { const test = line ? `${line} ${word}` : word; if (context.measureText(test).width > maxWidth && line) { lines.push(line); line = word; } else line = test; });
+    if (line) lines.push(line);
+    lines.slice(0, maxLines).forEach((value, index) => context.fillText(value, x, y + index * lineHeight));
+  }
+
+  async function createShareCard() {
+    const canvas = document.createElement("canvas"); canvas.width = 1080; canvas.height = 1350;
+    const context = canvas.getContext("2d");
+    const gradient = context.createLinearGradient(0, 0, 1080, 1350); gradient.addColorStop(0, "#fffaf8"); gradient.addColorStop(1, "#f6e8ed"); context.fillStyle = gradient; context.fillRect(0, 0, 1080, 1350);
+    context.strokeStyle = "#bf6d88"; context.lineWidth = 3; context.strokeRect(54, 54, 972, 1242);
+    context.textAlign = "center"; context.fillStyle = "#bd6c86"; context.font = "700 27px Arial"; context.fillText("EDIZIONE SPECIALE: TITINA BIRTHDAY", 540, 126);
+    context.fillStyle = "#1d191b"; context.font = "58px Georgia"; context.fillText("Il quiz che nessuno ha chiesto", 540, 207);
+    const photo = await loadImage(state.photoUrl || URL.createObjectURL(state.photo));
+    context.save(); context.beginPath(); context.arc(540, 420, 155, 0, Math.PI * 2); context.clip(); drawCover(context, photo, 385, 265, 310, 310); context.restore();
+    context.strokeStyle = "#bf6d88"; context.lineWidth = 8; context.beginPath(); context.arc(540, 420, 160, 0, Math.PI * 2); context.stroke();
+    context.fillStyle = "#756b70"; context.font = "24px Arial"; context.fillText(state.name, 540, 625);
+    context.fillStyle = "#bd6c86"; context.font = "118px Georgia"; context.fillText(`${state.score}/${questions.length}`, 540, 760);
+    context.fillStyle = "#756b70"; context.font = "700 23px Arial"; context.fillText("RISPOSTE GIUSTE", 540, 810);
+    context.fillStyle = "#1d191b"; context.font = "48px Georgia"; drawWrappedText(context, document.querySelector("#result-title").textContent, 540, 915, 840, 58, 3);
+    context.fillStyle = "#756b70"; context.font = "italic 25px Georgia"; context.fillText("fatto con affetto e un pizzico di cattiveria ♡", 540, 1240);
+    return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  }
+
+  async function shareResult() {
+    const button = document.querySelector("#share-result"); const status = document.querySelector("#share-status");
+    button.disabled = true; button.firstChild.textContent = "Preparo la card… "; status.hidden = true;
+    try {
+      const blob = await createShareCard(); const file = new File([blob], `verdetto-${state.name.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}.png`, { type: "image/png" });
+      const text = `${state.name} ha totalizzato ${state.score}/${questions.length} nel quiz che nessuno ha chiesto. Il verdetto è ufficiale.`;
+      if (navigator.share && navigator.canShare?.({ files: [file] })) await navigator.share({ title: "Il quiz che nessuno ha chiesto", text, files: [file] });
+      else { const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = file.name; link.click(); URL.revokeObjectURL(link.href); window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener"); status.textContent = "Card scaricata: allegala al messaggio WhatsApp che si è aperto."; status.hidden = false; }
+    } catch (error) { if (error.name !== "AbortError") { status.textContent = "Non sono riuscita a condividere la card. Riprova tra un attimo."; status.hidden = false; } }
+    finally { button.disabled = false; button.firstChild.textContent = "Condividi il verdetto "; }
   }
 
   function finish() {
@@ -312,12 +411,13 @@
   });
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; state.index < questions.length ? renderQuestion() : finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); });
+  document.querySelector("#share-result").addEventListener("click", shareResult);
   document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
   document.querySelector("#open-leaderboard").addEventListener("click", async () => {
     showScreen("ranking");
     const status = document.querySelector("#ranking-status"); const list = document.querySelector("#ranking-list");
     status.hidden = false; status.textContent = "Sto preparando la classifica…"; list.replaceChildren();
-    try { const rows = await fetchLeaderboard(); renderLeaderboard(rows, list); status.hidden = rows.length > 0; if (!rows.length) status.textContent = "Nessuna ha ancora completato il quiz. Puoi essere la prima!"; }
+    try { const rows = await fetchLeaderboard(); renderLeaderboard(rows, list); renderCollectiveResults(rows, "ranking"); status.hidden = rows.length > 0; if (!rows.length) status.textContent = "Nessuna ha ancora completato il quiz. Puoi essere la prima!"; }
     catch (error) { status.textContent = error.message; }
   });
   document.querySelector("#back-from-ranking").addEventListener("click", () => showScreen("welcome"));
