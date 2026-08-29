@@ -23,7 +23,7 @@
     "assets/risposta8.jpeg",
     "assets/risposta9.jpeg",
     "assets/risposta10.jpg",
-    "assets/risposta11.jpeg",
+    "assets/risposta23-gender-reveal.png",
     "assets/risposta12.jpg",
     "assets/risposta13.jpeg",
     "assets/risposta14.jpeg",
@@ -37,11 +37,11 @@
     "assets/risposta22.jpeg",
     "assets/risposta11.jpeg",
     "assets/risposta24.png",
-    "assets/risposta8.jpeg",
-    "assets/risposta17.jpeg",
+    "assets/risposta25-distrazione.png",
+    "assets/risposta26-abbraccio.png",
     "assets/risposta27.jpg",
     "assets/risposta28.jpeg",
-    "assets/rispostacorretta.jpeg",
+    "assets/risposta29-isolamento.png",
     "assets/risposta17.jpeg"
   ];
   const positive = window.MARTINA_FEEDBACK?.positive || [
