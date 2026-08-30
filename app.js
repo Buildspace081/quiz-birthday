@@ -3,7 +3,8 @@
 
   const questions = window.MARTINA_QUESTIONS;
   const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), statistics: document.querySelector("#statistics"), participant: document.querySelector("#participant") };
-  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", resultId: null, answers: [], previousScreen: "ranking", rankingOrigin: "welcome" };
+  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", photoDataUrl: "", resultId: null, answers: [], previousScreen: "ranking", rankingOrigin: "welcome" };
+  const sessionKey = "martina-quiz-session-v1";
   const supabase = window.MARTINA_SUPABASE;
   const defaultReactionImage = "assets/martina-compleanno.png";
   const negativeReactionImages = [
@@ -122,6 +123,29 @@
 
   function showScreen(name) { Object.entries(screens).forEach(([key, screen]) => { screen.hidden = key !== name; }); }
   function elapsed() { const seconds = Math.floor((Date.now() - state.startedAt) / 1000); return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }
+
+  function saveQuizSession() {
+    if (!state.startedAt || state.index >= questions.length) return;
+    try { localStorage.setItem(sessionKey, JSON.stringify({ name: state.name, index: state.index, score: state.score, startedAt: state.startedAt, answers: state.answers, photoDataUrl: state.photoDataUrl })); } catch (_) { /* La sessione resta comunque utilizzabile nella scheda corrente. */ }
+  }
+
+  function clearQuizSession() { localStorage.removeItem(sessionKey); }
+
+  function dataUrlToFile(dataUrl) {
+    const [metadata, data] = dataUrl.split(",");
+    const mime = metadata.match(/data:([^;]+)/)?.[1] || "image/jpeg";
+    const binary = atob(data); const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+    return new File([bytes], "foto-partecipante.jpg", { type: mime });
+  }
+
+  async function compactPhoto(file) {
+    const source = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+    const image = await loadImage(source); const maxSide = 900; const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+    const canvas = document.createElement("canvas"); canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale);
+    const context = canvas.getContext("2d"); context.fillStyle = "#fff"; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", .82);
+  }
 
   function apiHeaders(extra = {}) { return { apikey: supabase.anonKey, Authorization: `Bearer ${supabase.anonKey}`, ...extra }; }
 
@@ -312,6 +336,13 @@
     context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
   }
 
+  function drawCircleCover(context, image, centerX, centerY, radius) {
+    context.save(); context.beginPath(); context.arc(centerX, centerY, radius, 0, Math.PI * 2); context.clip();
+    drawCover(context, image, centerX - radius, centerY - radius, radius * 2, radius * 2); context.restore();
+    context.beginPath(); context.arc(centerX, centerY, radius, 0, Math.PI * 2); context.strokeStyle = "#fff"; context.lineWidth = 13; context.stroke();
+    context.beginPath(); context.arc(centerX, centerY, radius + 9, 0, Math.PI * 2); context.strokeStyle = "#d58da4"; context.lineWidth = 3; context.stroke();
+  }
+
   function verdictReaction(score) {
     if (score === 30) return { src: "assets/verdetto-30.jpeg", alt: "Reazione di Martina al risultato perfetto di 30 punti" };
     if (score >= 26 && score <= 29) return { src: "assets/verdetto-26-29.jpeg", alt: "Reazione di Martina al risultato da 26 a 29 punti" };
@@ -357,22 +388,23 @@
     context.fillStyle = "#bd6c86"; context.font = "italic 46px Georgia"; context.fillText("ma la cultura sono io", 540, 242);
     const reaction = verdictReaction(state.score);
     if (reaction) {
-      const reactionImage = await loadImage(reaction.src);
-      context.fillStyle = "#fff"; context.fillRect(300, 280, 480, 400);
-      context.strokeStyle = "#ead0d9"; context.lineWidth = 3; context.strokeRect(300, 280, 480, 400);
-      drawContain(context, reactionImage, 316, 296, 448, 342);
-      context.fillStyle = "#9b7b85"; context.font = "italic 20px Georgia"; context.fillText("Martina ha qualcosa da dire", 540, 665);
-      context.fillStyle = "#fff"; context.beginPath(); context.moveTo(520, 680); context.lineTo(560, 680); context.lineTo(540, 704); context.closePath(); context.fill();
+      const [reactionImage, playerImage] = await Promise.all([loadImage(reaction.src), loadImage(state.photoDataUrl || state.photoUrl)]);
+      context.strokeStyle = "#e6b8c7"; context.lineWidth = 8; context.setLineDash([15, 12]); context.beginPath(); context.moveTo(400, 470); context.bezierCurveTo(470, 390, 610, 390, 680, 470); context.stroke(); context.setLineDash([]);
+      drawCircleCover(context, playerImage, 405, 470, 168);
+      drawCircleCover(context, reactionImage, 675, 470, 168);
+      context.fillStyle = "#fff8fa"; context.beginPath(); context.arc(540, 470, 61, 0, Math.PI * 2); context.fill();
+      context.fillStyle = "#bd6c86"; context.font = "54px Georgia"; context.fillText("♡", 540, 489);
+      context.fillStyle = "#9b7b85"; context.font = "italic 20px Georgia"; context.fillText(`${state.name}  ·  Martina`, 540, 675);
     }
-    context.fillStyle = "#fffdfb"; context.fillRect(622, 305, 126, 78);
-    context.strokeStyle = "#ead0d9"; context.lineWidth = 2; context.strokeRect(622, 305, 126, 78);
-    context.fillStyle = "#bd6c86"; context.font = "42px Georgia"; context.fillText(`${state.score}/${questions.length}`, 685, 355);
-    context.fillStyle = "#756b70"; context.font = "700 12px Arial"; context.fillText("RISPOSTE GIUSTE", 685, 375);
-    context.fillStyle = "#756b70"; context.font = "23px Arial"; context.fillText(`Verdetto di ${state.name}`, 540, 735);
+    context.fillStyle = "#fffdfb"; context.beginPath(); context.roundRect(430, 705, 220, 105, 22); context.fill();
+    context.strokeStyle = "#ead0d9"; context.lineWidth = 2; context.stroke();
+    context.fillStyle = "#bd6c86"; context.font = "52px Georgia"; context.fillText(`${state.score}/${questions.length}`, 540, 766);
+    context.fillStyle = "#756b70"; context.font = "700 12px Arial"; context.fillText("RISPOSTE GIUSTE", 540, 793);
+    context.fillStyle = "#756b70"; context.font = "23px Arial"; context.fillText(`Il verdetto dell’amicizia di ${state.name}`, 540, 850);
     const verdictTitle = document.querySelector("#result-title").textContent;
     const verdictDescription = document.querySelector("#result-description").textContent;
-    context.fillStyle = "#1d191b"; drawFittedWrappedText(context, verdictTitle, 540, 770, 850, 150, { maxFont: 44, minFont: 27, lineRatio: 1.16 });
-    context.fillStyle = "#756b70"; drawFittedWrappedText(context, verdictDescription, 540, 945, 870, 250, { maxFont: 25, minFont: 18, lineRatio: 1.3 });
+    context.fillStyle = "#1d191b"; drawFittedWrappedText(context, verdictTitle, 540, 875, 850, 125, { maxFont: 40, minFont: 25, lineRatio: 1.14 });
+    context.fillStyle = "#756b70"; drawFittedWrappedText(context, verdictDescription, 540, 1020, 870, 190, { maxFont: 22, minFont: 16, lineRatio: 1.25 });
     context.fillStyle = "#9b7b85"; context.font = "italic 23px Georgia"; context.fillText("fatto con affetto e un pizzico di cattiveria ♡", 540, 1270);
     return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   }
@@ -391,9 +423,9 @@
     finally { button.disabled = false; button.firstChild.textContent = "Condividi il verdetto "; }
   }
 
-  function finish() {
+  function finish(options = {}) {
     clearInterval(state.interval);
-    const timeSeconds = Math.floor((Date.now() - state.startedAt) / 1000);
+    const timeSeconds = options.timeSeconds ?? Math.floor((Date.now() - state.startedAt) / 1000);
     const percentage = Math.round((state.score / questions.length) * 100);
     let title, description;
     if (state.score === questions.length) { title = "INTELLIGENTE E SI APPLICA PURE"; description = "Ma tu esattamente perché sai tutte queste cose? Inizio a pensare di aver parlato un po’ troppo in questi anni. Evidentemente tutto questo tempo insieme è servito a qualcosa: il titolo di migliore amica, per il momento, è salvo. Hai vinto me. Mi dispiace."; }
@@ -414,11 +446,32 @@
       reactionImage.src = reaction.src; reactionImage.alt = reaction.alt; reactionFigure.hidden = false;
     } else reactionFigure.hidden = true;
     document.querySelector("#result-name").textContent = state.name;
-    document.querySelector("#result-time").textContent = elapsed();
+    document.querySelector("#result-time").textContent = formatSeconds(timeSeconds);
     document.querySelector("#result-percentage").textContent = `${percentage}%`;
     document.querySelector("#progress-bar").style.width = "100%";
     showScreen("results");
-    updateLeaderboard(timeSeconds);
+    if (options.restore) {
+      const status = document.querySelector("#leaderboard-status"); status.hidden = false; status.textContent = "Sto preparando il podio…";
+      fetchLeaderboard().then(rows => { renderPodium(rows, document.querySelector("#result-podium")); status.hidden = true; }).catch(error => { status.textContent = error.message; });
+    } else {
+      try { localStorage.setItem(sessionKey, JSON.stringify({ completed: true, name: state.name, index: questions.length, score: state.score, startedAt: state.startedAt, timeSeconds, answers: state.answers, photoDataUrl: state.photoDataUrl })); } catch (_) { /* Nessun blocco se lo storage è pieno. */ }
+      updateLeaderboard(timeSeconds);
+    }
+  }
+
+  function restoreQuizSession() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(sessionKey)); } catch (_) { clearQuizSession(); return; }
+    if (!saved?.name || !saved.photoDataUrl || !Number.isInteger(saved.index)) return;
+    state.name = saved.name; state.index = saved.index; state.score = Number(saved.score) || 0; state.startedAt = Number(saved.startedAt) || Date.now(); state.answers = Array.isArray(saved.answers) ? saved.answers : [];
+    state.photoDataUrl = saved.photoDataUrl; state.photoUrl = saved.photoDataUrl; state.photo = dataUrlToFile(saved.photoDataUrl);
+    feedbackPools = { positive: shuffled(positive), negative: shuffled(negative) };
+    negativeImageIndex = state.answers.filter(answer => !answer.is_correct).length % negativeReactionImages.length;
+    if (saved.completed) { finish({ restore: true, timeSeconds: Number(saved.timeSeconds) || 0 }); return; }
+    if (state.index < 0 || state.index >= questions.length) { clearQuizSession(); return; }
+    document.querySelector("#timer").textContent = elapsed();
+    state.interval = setInterval(() => { document.querySelector("#timer").textContent = elapsed(); }, 1000);
+    renderQuestion(); showScreen("quiz");
   }
 
   function updateProfileForm() {
@@ -429,18 +482,25 @@
 
   document.querySelector("#player-name").addEventListener("input", updateProfileForm);
 
-  document.querySelector("#player-photo").addEventListener("change", event => {
+  async function handlePhotoChange(event) {
     const photo = event.target.files[0]; const error = document.querySelector("#photo-error"); error.hidden = true;
     if (!photo) { state.photo = null; updateProfileForm(); return; }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type) || photo.size > 5 * 1024 * 1024) { state.photo = null; event.target.value = ""; error.textContent = "Scegli una foto JPG, PNG o WebP di massimo 5 MB."; error.hidden = false; updateProfileForm(); return; }
-    state.photo = photo;
+    if (!photo.type.startsWith("image/") || photo.size > 5 * 1024 * 1024) { state.photo = null; event.target.value = ""; error.textContent = "Scegli una foto dalla galleria o scattane una, massimo 5 MB."; error.hidden = false; updateProfileForm(); return; }
+    state.photo = null; updateProfileForm();
+    try { state.photoDataUrl = await compactPhoto(photo); state.photo = dataUrlToFile(state.photoDataUrl); }
+    catch (_) { event.target.value = ""; error.textContent = "Non sono riuscita a preparare questa foto. Provane un’altra."; error.hidden = false; updateProfileForm(); return; }
     if (state.photoUrl) URL.revokeObjectURL(state.photoUrl);
-    state.photoUrl = URL.createObjectURL(photo);
+    state.photoUrl = state.photoDataUrl;
     const preview = document.querySelector("#photo-preview"); preview.replaceChildren(); const image = document.createElement("img"); image.src = state.photoUrl; image.alt = ""; preview.append(image);
     document.querySelector("#photo-caption").textContent = "Perfetta: in classifica farai faville.";
     document.querySelector(".photo-upload").classList.add("photo-ready");
     updateProfileForm();
-  });
+  }
+
+  document.querySelector("#take-photo-button").addEventListener("click", () => document.querySelector("#camera-photo").click());
+  document.querySelector("#choose-photo-button").addEventListener("click", () => document.querySelector("#player-photo").click());
+  document.querySelector("#camera-photo").addEventListener("change", handlePhotoChange);
+  document.querySelector("#player-photo").addEventListener("change", handlePhotoChange);
 
   document.querySelector("#start-form").addEventListener("submit", event => {
     event.preventDefault();
@@ -453,10 +513,10 @@
     clearInterval(state.interval);
     document.querySelector("#timer").textContent = "00:00";
     state.interval = setInterval(() => { document.querySelector("#timer").textContent = elapsed(); }, 1000);
-    renderQuestion(); showScreen("quiz");
+    saveQuizSession(); renderQuestion(); showScreen("quiz");
   });
-  document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; state.index < questions.length ? renderQuestion() : finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
-  document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); });
+  document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; if (state.index < questions.length) { saveQuizSession(); renderQuestion(); } else finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  document.querySelector("#restart-button").addEventListener("click", () => { clearQuizSession(); showScreen("welcome"); });
   document.querySelector("#share-result").addEventListener("click", shareResult);
   document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
   async function openRanking(origin) {
@@ -484,4 +544,5 @@
   document.querySelector("#back-from-ranking").addEventListener("click", () => { showScreen(state.rankingOrigin); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#back-from-statistics").addEventListener("click", () => { showScreen("results"); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#back-from-participant").addEventListener("click", () => showScreen(state.previousScreen));
+  restoreQuizSession();
 })();

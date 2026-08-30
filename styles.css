@@ -428,6 +428,9 @@ input:focus { border-color: var(--cherry); }
 .photo-note { position: absolute; top: 0; right: 30px; color: var(--sage); font-size: 11px; font-style: italic; transform: rotate(6deg); }
 .photo-copy strong { color: var(--ink); font-size: 13px; }
 .photo-copy small { margin-top: 5px; color: var(--muted); font-size: 11px; }
+.photo-source-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 auto 12px; }
+.photo-source-actions button { min-height: 42px; padding: 9px 10px; border: 1px solid #e8ccd5; border-radius: 12px; background: #fffafc; color: var(--cherry); cursor: pointer; font: inherit; font-size: 11px; }
+.photo-source-actions button:active { background: #f8e9ee; transform: scale(.985); }
 .profile .button { margin-top: 12px; }
 .profile-footnote { margin: 10px 0 0; color: var(--muted); font-size: 11px; font-style: italic; text-align: center; }
 
