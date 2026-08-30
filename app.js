@@ -345,6 +345,12 @@
     document.querySelector("#result-time").textContent = formatSeconds(timeSeconds);
     document.querySelector("#result-percentage").textContent = `${percentage}%`;
     document.querySelector("#progress-bar").style.width = "100%";
+    const resultsScreen = document.querySelector("#results");
+    resultsScreen.classList.remove("is-revealing");
+    if (!options.restore && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      void resultsScreen.offsetWidth;
+      resultsScreen.classList.add("is-revealing");
+    }
     showScreen("results");
     if (options.restore) {
       const status = document.querySelector("#leaderboard-status"); status.hidden = false; status.textContent = "Sto preparando il podio…";
