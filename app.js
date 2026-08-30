@@ -2,7 +2,7 @@
   "use strict";
 
   const questions = window.MARTINA_QUESTIONS;
-  const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), statistics: document.querySelector("#statistics"), participant: document.querySelector("#participant") };
+  const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), participant: document.querySelector("#participant") };
   const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", photoDataUrl: "", resultId: null, answers: [], previousScreen: "ranking", rankingOrigin: "welcome" };
   const sessionKey = "martina-quiz-session-v1";
   const supabase = window.MARTINA_SUPABASE;
@@ -207,33 +207,6 @@
     });
   }
 
-  function renderQuestionStats(rows, list, status) {
-    list.replaceChildren();
-    const validRows = rows.filter(row => Array.isArray(row.answers) && row.answers.length);
-    if (!validRows.length) { status.hidden = false; status.textContent = "Le statistiche appariranno appena arriveranno risultati con il dettaglio delle risposte."; return; }
-    status.hidden = true;
-    questions.forEach((question, questionIndex) => {
-      const collected = validRows.map(row => row.answers[questionIndex]).filter(answer => answer && answer.question === question.question);
-      if (!collected.length) return;
-      const correctCount = collected.filter(answer => answer.is_correct).length;
-      const wrongCount = collected.length - correctCount;
-      const correctPercentage = Math.round((correctCount / collected.length) * 100);
-      const wrongPercentage = 100 - correctPercentage;
-      const wrongChoices = collected.filter(answer => !answer.is_correct).reduce((counts, answer) => { counts[answer.selected_answer] = (counts[answer.selected_answer] || 0) + 1; return counts; }, {});
-      const mostChosenWrong = Object.entries(wrongChoices).sort((a, b) => b[1] - a[1])[0];
-      const card = document.createElement("article"); card.className = "question-stat-card";
-      const heading = document.createElement("div"); heading.className = "question-stat-heading";
-      const number = document.createElement("span"); number.textContent = `DOMANDA ${String(questionIndex + 1).padStart(2, "0")}`;
-      const title = document.createElement("h4"); title.textContent = question.question; heading.append(number, title);
-      const bar = document.createElement("div"); bar.className = "stat-bar"; bar.setAttribute("aria-label", `${correctPercentage}% corrette e ${wrongPercentage}% sbagliate`);
-      const correctBar = document.createElement("span"); correctBar.className = "stat-bar-correct"; correctBar.style.width = `${correctPercentage}%`; bar.append(correctBar);
-      const values = document.createElement("div"); values.className = "stat-values"; values.innerHTML = `<span><i class="stat-dot stat-dot-correct"></i><strong>${correctPercentage}%</strong> corrette <small>(${correctCount})</small></span><span><i class="stat-dot stat-dot-wrong"></i><strong>${wrongPercentage}%</strong> sbagliate <small>(${wrongCount})</small></span>`;
-      card.append(heading, bar, values);
-      if (mostChosenWrong) { const note = document.createElement("p"); note.className = "stat-note"; note.textContent = `L’errore più popolare: “${mostChosenWrong[0]}” (${mostChosenWrong[1]})`; card.append(note); }
-      list.append(card);
-    });
-  }
-
   function openParticipant(row, previousScreen) {
     state.previousScreen = previousScreen;
     const card = document.querySelector("#participant-card"); card.replaceChildren();
@@ -324,25 +297,6 @@
     return new Promise((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = source; });
   }
 
-  function drawCover(context, image, x, y, width, height) {
-    const scale = Math.max(width / image.width, height / image.height);
-    const sourceWidth = width / scale; const sourceHeight = height / scale;
-    context.drawImage(image, (image.width - sourceWidth) / 2, (image.height - sourceHeight) / 2, sourceWidth, sourceHeight, x, y, width, height);
-  }
-
-  function drawContain(context, image, x, y, width, height) {
-    const scale = Math.min(width / image.width, height / image.height);
-    const drawWidth = image.width * scale; const drawHeight = image.height * scale;
-    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
-  }
-
-  function drawCircleCover(context, image, centerX, centerY, radius) {
-    context.save(); context.beginPath(); context.arc(centerX, centerY, radius, 0, Math.PI * 2); context.clip();
-    drawCover(context, image, centerX - radius, centerY - radius, radius * 2, radius * 2); context.restore();
-    context.beginPath(); context.arc(centerX, centerY, radius, 0, Math.PI * 2); context.strokeStyle = "#fff"; context.lineWidth = 13; context.stroke();
-    context.beginPath(); context.arc(centerX, centerY, radius + 9, 0, Math.PI * 2); context.strokeStyle = "#d58da4"; context.lineWidth = 3; context.stroke();
-  }
-
   function verdictReaction(score) {
     if (score === 30) return { src: "assets/verdetto-30.jpeg", alt: "Reazione di Martina al risultato perfetto di 30 punti" };
     if (score >= 26 && score <= 29) return { src: "assets/verdetto-26-29.jpeg", alt: "Reazione di Martina al risultato da 26 a 29 punti" };
@@ -351,76 +305,6 @@
     if (score >= 10 && score <= 15) return { src: "assets/verdetto-10-15.jpeg", alt: "Reazione di Martina al risultato da 10 a 15 punti" };
     if (score >= 0 && score <= 9) return { src: "assets/verdetto-0-9.jpeg", alt: "Reazione di Martina al risultato da 0 a 9 punti" };
     return null;
-  }
-
-  function wrappedTextLines(context, text, maxWidth) {
-    const words = text.split(/\s+/); const lines = []; let line = "";
-    words.forEach(word => { const test = line ? `${line} ${word}` : word; if (context.measureText(test).width > maxWidth && line) { lines.push(line); line = word; } else line = test; });
-    if (line) lines.push(line);
-    return lines;
-  }
-
-  function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
-    const lines = wrappedTextLines(context, text, maxWidth);
-    lines.slice(0, maxLines).forEach((value, index) => context.fillText(value, x, y + index * lineHeight));
-  }
-
-  function drawFittedWrappedText(context, text, x, top, maxWidth, maxHeight, options = {}) {
-    const { maxFont = 28, minFont = 18, family = "Georgia", weight = "", lineRatio = 1.32 } = options;
-    let fontSize = maxFont; let lines = []; let lineHeight = fontSize * lineRatio;
-    while (fontSize >= minFont) {
-      context.font = `${weight ? `${weight} ` : ""}${fontSize}px ${family}`;
-      lines = wrappedTextLines(context, text, maxWidth);
-      lineHeight = fontSize * lineRatio;
-      if (lines.length * lineHeight <= maxHeight) break;
-      fontSize -= 1;
-    }
-    lines.forEach((line, index) => context.fillText(line, x, top + fontSize + index * lineHeight));
-  }
-
-  async function createShareCard() {
-    const canvas = document.createElement("canvas"); canvas.width = 1080; canvas.height = 1350;
-    const context = canvas.getContext("2d");
-    const gradient = context.createLinearGradient(0, 0, 1080, 1350); gradient.addColorStop(0, "#fffaf8"); gradient.addColorStop(1, "#f6e8ed"); context.fillStyle = gradient; context.fillRect(0, 0, 1080, 1350);
-    context.strokeStyle = "#bf6d88"; context.lineWidth = 3; context.strokeRect(54, 54, 972, 1242);
-    context.textAlign = "center"; context.fillStyle = "#bd6c86"; context.font = "700 27px Arial"; context.fillText("EDIZIONE SPECIALE: TITINA BIRTHDAY", 540, 126);
-    context.fillStyle = "#1d191b"; context.font = "46px Georgia"; context.fillText("Un quiz di cultura generale,", 540, 190);
-    context.fillStyle = "#bd6c86"; context.font = "italic 46px Georgia"; context.fillText("ma la cultura sono io", 540, 242);
-    const reaction = verdictReaction(state.score);
-    if (reaction) {
-      const [reactionImage, playerImage] = await Promise.all([loadImage(reaction.src), loadImage(state.photoDataUrl || state.photoUrl)]);
-      context.strokeStyle = "#e6b8c7"; context.lineWidth = 8; context.setLineDash([15, 12]); context.beginPath(); context.moveTo(400, 470); context.bezierCurveTo(470, 390, 610, 390, 680, 470); context.stroke(); context.setLineDash([]);
-      drawCircleCover(context, playerImage, 405, 470, 168);
-      drawCircleCover(context, reactionImage, 675, 470, 168);
-      context.fillStyle = "#fff8fa"; context.beginPath(); context.arc(540, 470, 61, 0, Math.PI * 2); context.fill();
-      context.fillStyle = "#bd6c86"; context.font = "54px Georgia"; context.fillText("♡", 540, 489);
-      context.fillStyle = "#9b7b85"; context.font = "italic 20px Georgia"; context.fillText(`${state.name}  ·  Martina`, 540, 675);
-    }
-    context.fillStyle = "#fffdfb"; context.beginPath(); context.roundRect(430, 705, 220, 105, 22); context.fill();
-    context.strokeStyle = "#ead0d9"; context.lineWidth = 2; context.stroke();
-    context.fillStyle = "#bd6c86"; context.font = "52px Georgia"; context.fillText(`${state.score}/${questions.length}`, 540, 766);
-    context.fillStyle = "#756b70"; context.font = "700 12px Arial"; context.fillText("RISPOSTE GIUSTE", 540, 793);
-    context.fillStyle = "#756b70"; context.font = "23px Arial"; context.fillText(`Il verdetto dell’amicizia di ${state.name}`, 540, 850);
-    const verdictTitle = document.querySelector("#result-title").textContent;
-    const verdictDescription = document.querySelector("#result-description").textContent;
-    context.fillStyle = "#1d191b"; drawFittedWrappedText(context, verdictTitle, 540, 875, 850, 125, { maxFont: 40, minFont: 25, lineRatio: 1.14 });
-    context.fillStyle = "#756b70"; drawFittedWrappedText(context, verdictDescription, 540, 1020, 870, 190, { maxFont: 22, minFont: 16, lineRatio: 1.25 });
-    context.fillStyle = "#9b7b85"; context.font = "italic 23px Georgia"; context.fillText("fatto con affetto e un pizzico di cattiveria ♡", 540, 1270);
-    return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
-  }
-
-  async function shareResult() {
-    const button = document.querySelector("#share-result"); const status = document.querySelector("#share-status");
-    button.disabled = true; button.firstChild.textContent = "Preparo la card… "; status.hidden = true;
-    try {
-      const blob = await createShareCard(); const file = new File([blob], `verdetto-${state.name.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}.png`, { type: "image/png" });
-      const verdictTitle = document.querySelector("#result-title").textContent;
-      const verdictDescription = document.querySelector("#result-description").textContent;
-      const text = `${state.name} ha totalizzato ${state.score}/${questions.length} nel quiz che nessuno ha chiesto.\n\n${verdictTitle}\n${verdictDescription}`;
-      if (navigator.share && navigator.canShare?.({ files: [file] })) await navigator.share({ title: "Il quiz che nessuno ha chiesto", text, files: [file] });
-      else { const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = file.name; link.click(); URL.revokeObjectURL(link.href); window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener"); status.textContent = "Card scaricata: allegala al messaggio WhatsApp che si è aperto."; status.hidden = false; }
-    } catch (error) { if (error.name !== "AbortError") { status.textContent = "Non sono riuscita a condividere la card. Riprova tra un attimo."; status.hidden = false; } }
-    finally { button.disabled = false; button.firstChild.textContent = "Condividi il verdetto "; }
   }
 
   function finish(options = {}) {
@@ -497,8 +381,12 @@
     updateProfileForm();
   }
 
-  document.querySelector("#take-photo-button").addEventListener("click", () => document.querySelector("#camera-photo").click());
-  document.querySelector("#choose-photo-button").addEventListener("click", () => document.querySelector("#player-photo").click());
+  const photoSourceTrigger = document.querySelector("#photo-source-trigger");
+  const photoSourceActions = document.querySelector("#photo-source-actions");
+  function closePhotoSources() { photoSourceActions.hidden = true; photoSourceTrigger.setAttribute("aria-expanded", "false"); }
+  photoSourceTrigger.addEventListener("click", () => { photoSourceActions.hidden = !photoSourceActions.hidden; photoSourceTrigger.setAttribute("aria-expanded", String(!photoSourceActions.hidden)); });
+  document.querySelector("#take-photo-button").addEventListener("click", () => { closePhotoSources(); document.querySelector("#camera-photo").click(); });
+  document.querySelector("#choose-photo-button").addEventListener("click", () => { closePhotoSources(); document.querySelector("#player-photo").click(); });
   document.querySelector("#camera-photo").addEventListener("change", handlePhotoChange);
   document.querySelector("#player-photo").addEventListener("change", handlePhotoChange);
 
@@ -517,7 +405,6 @@
   });
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; if (state.index < questions.length) { saveQuizSession(); renderQuestion(); } else finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#restart-button").addEventListener("click", () => { clearQuizSession(); showScreen("welcome"); });
-  document.querySelector("#share-result").addEventListener("click", shareResult);
   document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
   async function openRanking(origin) {
     state.rankingOrigin = origin;
@@ -529,20 +416,41 @@
     catch (error) { status.textContent = error.message; }
   }
 
-  async function openStatistics() {
-    showScreen("statistics");
-    const status = document.querySelector("#statistics-status"); const list = document.querySelector("#statistics-question-stats");
-    status.hidden = false; status.textContent = "Sto contando le figuracce…"; list.replaceChildren();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    try { const rows = await fetchLeaderboard(); renderQuestionStats(rows, list, status); }
-    catch (error) { status.hidden = false; status.textContent = error.message; }
-  }
-
   document.querySelector("#open-leaderboard").addEventListener("click", () => openRanking("welcome"));
   document.querySelector("#open-full-ranking").addEventListener("click", () => openRanking("results"));
-  document.querySelector("#open-statistics").addEventListener("click", openStatistics);
   document.querySelector("#back-from-ranking").addEventListener("click", () => { showScreen(state.rankingOrigin); window.scrollTo({ top: 0, behavior: "smooth" }); });
-  document.querySelector("#back-from-statistics").addEventListener("click", () => { showScreen("results"); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#back-from-participant").addEventListener("click", () => showScreen(state.previousScreen));
+
+  const themeStorageKey = "martina-color-theme";
+  const themeToggle = document.querySelector("#theme-toggle");
+  const themeOptions = document.querySelector("#theme-options");
+  const themeColors = { rose: "#fffdfb", sage: "#fbfdf9", sky: "#fbfdff", lilac: "#fdfbff", peach: "#fffdfa" };
+
+  function closeThemeOptions() {
+    themeOptions.hidden = true;
+    themeToggle.setAttribute("aria-expanded", "false");
+  }
+
+  function applyTheme(theme) {
+    const selectedTheme = themeColors[theme] ? theme : "rose";
+    document.documentElement.dataset.theme = selectedTheme;
+    document.querySelector('meta[name="theme-color"]').content = themeColors[selectedTheme];
+    document.querySelectorAll("[data-theme-choice]").forEach(button => {
+      button.setAttribute("aria-pressed", String(button.dataset.themeChoice === selectedTheme));
+    });
+    try { localStorage.setItem(themeStorageKey, selectedTheme); } catch (_) { /* Il tema resta comunque attivo. */ }
+  }
+
+  themeToggle.addEventListener("click", () => {
+    const willOpen = themeOptions.hidden;
+    themeOptions.hidden = !willOpen;
+    themeToggle.setAttribute("aria-expanded", String(willOpen));
+  });
+  document.querySelectorAll("[data-theme-choice]").forEach(button => {
+    button.addEventListener("click", () => { applyTheme(button.dataset.themeChoice); closeThemeOptions(); });
+  });
+  document.addEventListener("click", event => { if (!event.target.closest(".theme-picker")) closeThemeOptions(); });
+  document.addEventListener("keydown", event => { if (event.key === "Escape") closeThemeOptions(); });
+  applyTheme(document.documentElement.dataset.theme || "rose");
   restoreQuizSession();
 })();
