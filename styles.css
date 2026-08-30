@@ -45,7 +45,29 @@ button, input { font: inherit; }
   height: 74px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.renewal-test {
+  color: var(--cherry);
+  font-family: Georgia, serif;
+  font-size: 11px;
+  font-style: italic;
+  letter-spacing: .25px;
+  transform: rotate(2deg);
+}
+
+.renewal-test span { color: var(--cherry); }
+
+.topbar-special {
+  color: var(--cherry);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 1.15px;
+  text-align: right;
+  text-transform: uppercase;
 }
 
 .edition {
@@ -323,6 +345,11 @@ input:focus { border-color: var(--cherry); }
 .result-score div > span { margin: 0 5px; color: #d6acb8; font-family: "Bodoni 72", Didot, Baskerville, serif; font-size: 34px; }
 .result-score small { color: var(--sage); font-family: "Bodoni 72", Didot, Baskerville, serif; font-size: 29px; }
 .results h2 { margin: 0 0 14px; font-size: clamp(37px, 8vw, 53px); }
+.result-reaction { position: relative; width: min(100%, 390px); margin: 24px auto 32px; padding: 10px 10px 14px; background: #fff; border: 1px solid rgba(189, 108, 134, .2); border-radius: 24px 24px 20px 20px; box-shadow: 0 16px 35px rgba(91, 55, 67, .12); transform: rotate(-1deg); }
+.result-reaction::after { position: absolute; bottom: -15px; left: 50%; width: 28px; height: 28px; background: #fff; border-right: 1px solid rgba(189, 108, 134, .2); border-bottom: 1px solid rgba(189, 108, 134, .2); content: ""; transform: translateX(-50%) rotate(45deg); }
+.result-reaction img { display: block; width: 100%; max-height: 480px; object-fit: contain; border-radius: 17px; background: #f7edef; }
+.result-reaction figcaption { margin-top: 10px; color: #8e737c; font-family: Georgia, serif; font-size: 15px; font-style: italic; }
+.result-verdict-copy { position: relative; z-index: 1; }
 .result-details { display: flex; justify-content: space-between; margin: 33px 0 12px; padding: 21px 0; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); text-align: left; }
 .result-details div { display: grid; gap: 7px; }
 .result-details span { color: var(--muted); font-size: 11px; }
@@ -443,6 +470,9 @@ input:focus { border-color: var(--cherry); }
 
 @media (max-width: 380px) {
   h1 { font-size: clamp(32px, 9vw, 37px); }
+  .welcome h1 > span:last-child { white-space: normal; }
+  .renewal-test { max-width: 125px; font-size: 10px; line-height: 1.2; text-align: left; }
+  .topbar-special { max-width: 125px; font-size: 8px; letter-spacing: .9px; }
   .portrait { width: 142px; }
   .portrait-scene { width: 275px; }
   .portrait-note { right: -1px; font-size: 9px; }

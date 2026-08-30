@@ -109,7 +109,7 @@
     "No. Per fortuna il test non prevede l’espulsione dal gruppo."
   ];
   let feedbackPools = { positive: [], negative: [] };
-  let negativeImagePool = [];
+  let negativeImageIndex = 0;
 
   function shuffled(messages) {
     const result = [...messages];
@@ -293,8 +293,8 @@
     const feedbackImage = document.querySelector("#feedback-image");
     if (correct) feedbackImage.src = correctReactionImages[state.index];
     else {
-      if (!negativeImagePool.length) negativeImagePool = shuffled(negativeReactionImages);
-      feedbackImage.src = negativeImagePool.pop();
+      feedbackImage.src = negativeReactionImages[negativeImageIndex % negativeReactionImages.length];
+      negativeImageIndex += 1;
     }
     document.querySelector("#feedback-text").textContent = question.comment || feedbackPools[type].pop() || (correct ? "Risposta corretta!" : "Risposta sbagliata!");
     document.querySelector("#next-button").firstChild.textContent = state.index === questions.length - 1 ? "Scopri il verdetto " : "Prossima domanda ";
@@ -311,11 +311,45 @@
     context.drawImage(image, (image.width - sourceWidth) / 2, (image.height - sourceHeight) / 2, sourceWidth, sourceHeight, x, y, width, height);
   }
 
-  function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  function drawContain(context, image, x, y, width, height) {
+    const scale = Math.min(width / image.width, height / image.height);
+    const drawWidth = image.width * scale; const drawHeight = image.height * scale;
+    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+  }
+
+  function verdictReaction(score) {
+    if (score === 30) return { src: "assets/verdetto-30.jpeg", alt: "Reazione di Martina al risultato perfetto di 30 punti" };
+    if (score >= 26 && score <= 29) return { src: "assets/verdetto-26-29.jpeg", alt: "Reazione di Martina al risultato da 26 a 29 punti" };
+    if (score >= 21 && score <= 25) return { src: "assets/verdetto-21-25.jpeg", alt: "Reazione di Martina al risultato da 21 a 25 punti" };
+    if (score >= 16 && score <= 20) return { src: "assets/verdetto-16-20.jpeg", alt: "Reazione di Martina al risultato da 16 a 20 punti" };
+    if (score >= 10 && score <= 15) return { src: "assets/verdetto-10-15.jpeg", alt: "Reazione di Martina al risultato da 10 a 15 punti" };
+    if (score >= 0 && score <= 9) return { src: "assets/verdetto-0-9.jpeg", alt: "Reazione di Martina al risultato da 0 a 9 punti" };
+    return null;
+  }
+
+  function wrappedTextLines(context, text, maxWidth) {
     const words = text.split(/\s+/); const lines = []; let line = "";
     words.forEach(word => { const test = line ? `${line} ${word}` : word; if (context.measureText(test).width > maxWidth && line) { lines.push(line); line = word; } else line = test; });
     if (line) lines.push(line);
+    return lines;
+  }
+
+  function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
+    const lines = wrappedTextLines(context, text, maxWidth);
     lines.slice(0, maxLines).forEach((value, index) => context.fillText(value, x, y + index * lineHeight));
+  }
+
+  function drawFittedWrappedText(context, text, x, top, maxWidth, maxHeight, options = {}) {
+    const { maxFont = 28, minFont = 18, family = "Georgia", weight = "", lineRatio = 1.32 } = options;
+    let fontSize = maxFont; let lines = []; let lineHeight = fontSize * lineRatio;
+    while (fontSize >= minFont) {
+      context.font = `${weight ? `${weight} ` : ""}${fontSize}px ${family}`;
+      lines = wrappedTextLines(context, text, maxWidth);
+      lineHeight = fontSize * lineRatio;
+      if (lines.length * lineHeight <= maxHeight) break;
+      fontSize -= 1;
+    }
+    lines.forEach((line, index) => context.fillText(line, x, top + fontSize + index * lineHeight));
   }
 
   async function createShareCard() {
@@ -326,13 +360,26 @@
     context.textAlign = "center"; context.fillStyle = "#bd6c86"; context.font = "700 27px Arial"; context.fillText("EDIZIONE SPECIALE: TITINA BIRTHDAY", 540, 126);
     context.fillStyle = "#1d191b"; context.font = "58px Georgia"; context.fillText("Il quiz che nessuno ha chiesto", 540, 207);
     const photo = await loadImage(state.photoUrl || URL.createObjectURL(state.photo));
-    context.save(); context.beginPath(); context.arc(540, 420, 155, 0, Math.PI * 2); context.clip(); drawCover(context, photo, 385, 265, 310, 310); context.restore();
-    context.strokeStyle = "#bf6d88"; context.lineWidth = 8; context.beginPath(); context.arc(540, 420, 160, 0, Math.PI * 2); context.stroke();
-    context.fillStyle = "#756b70"; context.font = "24px Arial"; context.fillText(state.name, 540, 625);
+    const reaction = verdictReaction(state.score);
+    const profileX = reaction ? 325 : 540; const profileRadius = reaction ? 122 : 155;
+    context.save(); context.beginPath(); context.arc(profileX, 420, profileRadius, 0, Math.PI * 2); context.clip(); drawCover(context, photo, profileX - profileRadius, 420 - profileRadius, profileRadius * 2, profileRadius * 2); context.restore();
+    context.strokeStyle = "#bf6d88"; context.lineWidth = 8; context.beginPath(); context.arc(profileX, 420, profileRadius + 5, 0, Math.PI * 2); context.stroke();
+    context.fillStyle = "#756b70"; context.font = "24px Arial"; context.fillText(state.name, profileX, 585);
+    if (reaction) {
+      const reactionImage = await loadImage(reaction.src);
+      context.fillStyle = "#fff"; context.fillRect(568, 260, 300, 330);
+      context.strokeStyle = "#ead0d9"; context.lineWidth = 3; context.strokeRect(568, 260, 300, 330);
+      drawContain(context, reactionImage, 580, 272, 276, 292);
+      context.fillStyle = "#9b7b85"; context.font = "italic 18px Georgia"; context.fillText("Martina commenta", 718, 582);
+      context.fillStyle = "#fff"; context.beginPath(); context.moveTo(698, 590); context.lineTo(738, 590); context.lineTo(718, 612); context.closePath(); context.fill();
+    }
     context.fillStyle = "#bd6c86"; context.font = "118px Georgia"; context.fillText(`${state.score}/${questions.length}`, 540, 760);
     context.fillStyle = "#756b70"; context.font = "700 23px Arial"; context.fillText("RISPOSTE GIUSTE", 540, 810);
-    context.fillStyle = "#1d191b"; context.font = "48px Georgia"; drawWrappedText(context, document.querySelector("#result-title").textContent, 540, 915, 840, 58, 3);
-    context.fillStyle = "#756b70"; context.font = "italic 25px Georgia"; context.fillText("fatto con affetto e un pizzico di cattiveria ♡", 540, 1240);
+    const verdictTitle = document.querySelector("#result-title").textContent;
+    const verdictDescription = document.querySelector("#result-description").textContent;
+    context.fillStyle = "#1d191b"; drawFittedWrappedText(context, verdictTitle, 540, 850, 850, 145, { maxFont: 44, minFont: 27, lineRatio: 1.16 });
+    context.fillStyle = "#756b70"; drawFittedWrappedText(context, verdictDescription, 540, 1010, 870, 210, { maxFont: 25, minFont: 18, lineRatio: 1.3 });
+    context.fillStyle = "#9b7b85"; context.font = "italic 23px Georgia"; context.fillText("fatto con affetto e un pizzico di cattiveria ♡", 540, 1270);
     return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   }
 
@@ -341,7 +388,9 @@
     button.disabled = true; button.firstChild.textContent = "Preparo la card… "; status.hidden = true;
     try {
       const blob = await createShareCard(); const file = new File([blob], `verdetto-${state.name.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}.png`, { type: "image/png" });
-      const text = `${state.name} ha totalizzato ${state.score}/${questions.length} nel quiz che nessuno ha chiesto. Il verdetto è ufficiale.`;
+      const verdictTitle = document.querySelector("#result-title").textContent;
+      const verdictDescription = document.querySelector("#result-description").textContent;
+      const text = `${state.name} ha totalizzato ${state.score}/${questions.length} nel quiz che nessuno ha chiesto.\n\n${verdictTitle}\n${verdictDescription}`;
       if (navigator.share && navigator.canShare?.({ files: [file] })) await navigator.share({ title: "Il quiz che nessuno ha chiesto", text, files: [file] });
       else { const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = file.name; link.click(); URL.revokeObjectURL(link.href); window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener"); status.textContent = "Card scaricata: allegala al messaggio WhatsApp che si è aperto."; status.hidden = false; }
     } catch (error) { if (error.name !== "AbortError") { status.textContent = "Non sono riuscita a condividere la card. Riprova tra un attimo."; status.hidden = false; } }
@@ -367,6 +416,12 @@
     resultPhoto.alt = `Foto di ${state.name}`;
     document.querySelector("#result-title").textContent = title;
     document.querySelector("#result-description").textContent = description;
+    const reaction = verdictReaction(state.score);
+    const reactionFigure = document.querySelector("#result-reaction");
+    if (reaction) {
+      const reactionImage = document.querySelector("#result-reaction-image");
+      reactionImage.src = reaction.src; reactionImage.alt = reaction.alt; reactionFigure.hidden = false;
+    } else reactionFigure.hidden = true;
     document.querySelector("#result-name").textContent = state.name;
     document.querySelector("#result-time").textContent = elapsed();
     document.querySelector("#result-percentage").textContent = `${percentage}%`;
@@ -403,7 +458,7 @@
     if (!state.photo) { const error = document.querySelector("#photo-error"); error.textContent = "Prima la foto: in classifica vogliamo riconoscerti!"; error.hidden = false; return; }
     state.index = 0; state.score = 0; state.startedAt = Date.now(); state.resultId = null; state.answers = [];
     feedbackPools = { positive: shuffled(positive), negative: shuffled(negative) };
-    negativeImagePool = shuffled(negativeReactionImages);
+    negativeImageIndex = 0;
     clearInterval(state.interval);
     document.querySelector("#timer").textContent = "00:00";
     state.interval = setInterval(() => { document.querySelector("#timer").textContent = elapsed(); }, 1000);

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#fffdfb" />
-    <title>Il quiz che nessuno ha chiesto</title>
+    <title>Un quiz di cultura generale, ma la cultura sono io</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="questions.js" defer></script>
     <script src="feedback.js" defer></script>
@@ -13,15 +13,13 @@
   </head>
   <body>
     <main class="shell">
-      <header class="topbar"><span class="edition">friendship edition <span aria-hidden="true">✿</span></span></header>
+      <header class="topbar"><span class="renewal-test">test per il rinnovo dell’amicizia <span aria-hidden="true">✿</span></span><span class="topbar-special">edizione speciale:<br />Titina birthday</span></header>
       <section id="welcome" class="screen welcome">
         <div class="portrait-scene"><span class="portrait-note" aria-hidden="true">ti tiene d’occhio</span><div class="portrait"><img src="assets/martina-compleanno.png" alt="Martina da bambina durante il suo compleanno" /><span class="portrait-caption">Mini marti che ti giudica</span></div><span class="portrait-heart" aria-hidden="true">♡</span></div>
-        <p class="eyebrow">EDIZIONE SPECIALE: TITINA BIRTHDAY</p>
-        <h1><span>Il quiz che <em>nessuno</em></span><span>ha chiesto</span></h1>
+        <h1><span>Un quiz di</span><span>cultura generale,</span><span><em>ma la cultura sono io</em></span></h1>
         <p class="intro home-intro"><span>O meglio: tutto quello che avreste dovuto imparare</span><span>frequentandomi fino ad oggi.</span></p>
         <button id="begin-button" class="button home-button" type="button">Ok, sono pronta <span>→</span></button>
         <button id="open-leaderboard" class="leaderboard-link" type="button"><span>È il momento della verità.</span><span class="leaderboard-link-arrow" aria-hidden="true">→</span></button>
-        <p class="footnote">fatto con affetto e un pizzico di cattiveria ♡</p>
       </section>
       <section id="profile" class="screen profile" hidden><div class="profile-heading"><h2>Fatti <em>riconoscere</em></h2><p class="intro">Le amiche vere non hanno nulla da temere. Forse.</p></div><form id="start-form"><div class="profile-name"><label for="player-name"><span class="profile-step">01</span> Chi rischia l’amicizia?</label><input id="player-name" name="name" maxlength="32" required autocomplete="given-name" /></div><label class="photo-upload" for="player-photo"><span id="photo-preview" class="photo-preview" aria-hidden="true">＋</span><span class="photo-copy"><strong><span class="profile-step">02</span> Mettici la faccia</strong><small id="photo-caption">Scegline una per brillare in classifica.</small></span></label><input id="player-photo" class="photo-input" type="file" accept="image/jpeg,image/png,image/webp" required /><p id="photo-error" class="photo-error" hidden></p><button id="profile-submit" class="button" type="submit" disabled>Che il giudizio abbia inizio <span>→</span></button><p class="profile-footnote">Tranquilla, giudicherò soltanto ogni tua risposta.</p></form></section>
       <section id="quiz" class="screen quiz" hidden>
@@ -33,7 +31,7 @@
         <div id="feedback" class="feedback" hidden><div class="feedback-card"><img id="feedback-image" class="feedback-image" src="assets/martina-compleanno.png" alt="Reaction di Martina" /><div class="feedback-bubble"><p id="feedback-text"></p><button id="next-button" class="button reaction-next" type="button">Prossima domanda <span>→</span></button></div></div></div>
       </section>
       <section id="results" class="screen results" hidden>
-        <div class="result-card"><span class="result-decoration" aria-hidden="true">✧ ♡ ✧</span><p id="result-greeting" class="result-greeting"></p><p class="eyebrow">I RISULTATI PARLANO CHIARO</p><div class="result-avatar"><img id="result-player-photo" alt="Foto della partecipante" /></div><div class="result-score"><span class="result-score-label">RISPOSTE GIUSTE</span><div><strong id="score-value"></strong><span>/</span><small id="score-total">30</small></div></div><h2 id="result-title"></h2><p id="result-description" class="intro"></p><div class="result-details"><div><span>Giocatrice</span><strong id="result-name"></strong></div><div><span>Tempo</span><strong id="result-time"></strong></div><div><span>Precisione</span><strong id="result-percentage"></strong></div></div></div>
+        <div class="result-card"><span class="result-decoration" aria-hidden="true">✧ ♡ ✧</span><p id="result-greeting" class="result-greeting"></p><p class="eyebrow">I RISULTATI PARLANO CHIARO</p><div class="result-avatar"><img id="result-player-photo" alt="Foto della partecipante" /></div><div class="result-score"><span class="result-score-label">RISPOSTE GIUSTE</span><div><strong id="score-value"></strong><span>/</span><small id="score-total">30</small></div></div><figure id="result-reaction" class="result-reaction" hidden><img id="result-reaction-image" alt="Reazione di Martina al risultato" /><figcaption>Martina ha qualcosa da dire</figcaption></figure><div class="result-verdict-copy"><h2 id="result-title"></h2><p id="result-description" class="intro"></p></div><div class="result-details"><div><span>Giocatrice</span><strong id="result-name"></strong></div><div><span>Tempo</span><strong id="result-time"></strong></div><div><span>Precisione</span><strong id="result-percentage"></strong></div></div></div>
         <button id="share-result" class="button share-result" type="button">Condividi il verdetto <span>↗</span></button><p id="share-status" class="share-status" hidden></p>
         <section class="leaderboard"><div class="leaderboard-heading"><p class="eyebrow">IL PODIO</p><h3>Le amiche più pericolose</h3></div><div id="result-podium" class="podium"></div><div class="leaderboard-heading full-ranking-heading"><p class="eyebrow">LA CLASSIFICA UFFICIALE</p><h3>Chi la conosce davvero?</h3></div><p id="leaderboard-status" class="leaderboard-status">Sto preparando la classifica…</p><div id="leaderboard-list" class="leaderboard-list"></div></section>
         <section class="question-stats"><div class="leaderboard-heading"><p class="eyebrow">STATISTICHE DEL DISASTRO</p><h3>Come sono andate le domande?</h3></div><p id="result-stats-status" class="leaderboard-status">Sto contando le figuracce…</p><div id="result-question-stats" class="question-stats-list"></div></section>
