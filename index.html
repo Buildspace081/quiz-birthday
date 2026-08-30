@@ -25,7 +25,7 @@
       </section>
       <section id="profile" class="screen profile" hidden><div class="profile-heading"><h2>Fatti <em>riconoscere</em></h2><p class="intro">Le amiche vere non hanno nulla da temere. Forse.</p></div><form id="start-form"><div class="profile-name"><label for="player-name"><span class="profile-step">01</span> Chi rischia l’amicizia?</label><input id="player-name" name="name" maxlength="32" required autocomplete="given-name" /></div><button id="photo-source-trigger" class="photo-upload" type="button"><span id="photo-preview" class="photo-preview" aria-hidden="true">＋</span><span class="photo-copy"><strong><span class="profile-step">02</span> Mettici la faccia</strong><small id="photo-caption">Scegline una per brillare in classifica.</small></span></button><input id="player-photo" class="photo-input" type="file" accept="image/*" /><p id="photo-error" class="photo-error" hidden></p><button id="profile-submit" class="button" type="submit" disabled>Che il giudizio abbia inizio <span>→</span></button><p class="profile-footnote">Tranquilla, giudicherò soltanto ogni tua risposta.</p></form></section>
       <section id="quiz" class="screen quiz" hidden>
-        <div class="quiz-meta"><span id="question-number"></span><span id="timer">00:00</span></div>
+        <div class="quiz-meta"><span id="question-number"></span><span class="quiz-meta-actions"><span id="timer">00:00</span><button id="quit-quiz" class="quit-quiz" type="button">Mi ritiro</button></span></div>
         <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
         <p id="category" class="eyebrow"></p>
         <h2 id="question-text"></h2>
@@ -41,5 +41,6 @@
 
       <section id="participant" class="screen participant" hidden><button id="back-from-participant" class="ranking-back" type="button">← Torna alla classifica</button><div id="participant-card" class="participant-card"></div><div class="participant-answers-heading"><p class="eyebrow">LE RISPOSTE, UNA PER UNA</p><h3>Vediamo cosa è successo</h3></div><div id="participant-answers" class="participant-answers"></div></section>
     </main>
+    <dialog id="quit-dialog" class="quit-dialog"><form method="dialog"><span class="quit-dialog-decoration" aria-hidden="true">✧ ♡ ✧</span><h2>Vuoi davvero interrompere il test?</h2><p>Martina ricorderà questo gesto.</p><div class="quit-dialog-actions"><button class="button quit-continue" value="cancel">Continuo, ho ancora dignità</button><button id="confirm-quit" class="quit-confirm" type="button">Abbandono il test</button></div></form></dialog>
   </body>
 </html>

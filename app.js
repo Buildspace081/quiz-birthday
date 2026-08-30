@@ -401,6 +401,14 @@
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; if (state.index < questions.length) { saveQuizSession(); renderQuestion(); } else finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#restart-button").addEventListener("click", () => { clearQuizSession(); showScreen("welcome"); });
   document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
+  const quitDialog = document.querySelector("#quit-dialog");
+  document.querySelector("#quit-quiz").addEventListener("click", () => quitDialog.showModal());
+  document.querySelector("#confirm-quit").addEventListener("click", () => {
+    clearInterval(state.interval);
+    clearQuizSession();
+    quitDialog.close();
+    window.location.reload();
+  });
   async function openRanking(origin) {
     state.rankingOrigin = origin;
     showScreen("ranking");
