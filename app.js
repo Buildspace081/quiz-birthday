@@ -382,12 +382,7 @@
   }
 
   const photoSourceTrigger = document.querySelector("#photo-source-trigger");
-  const photoSourceActions = document.querySelector("#photo-source-actions");
-  function closePhotoSources() { photoSourceActions.hidden = true; photoSourceTrigger.setAttribute("aria-expanded", "false"); }
-  photoSourceTrigger.addEventListener("click", () => { photoSourceActions.hidden = !photoSourceActions.hidden; photoSourceTrigger.setAttribute("aria-expanded", String(!photoSourceActions.hidden)); });
-  document.querySelector("#take-photo-button").addEventListener("click", () => { closePhotoSources(); document.querySelector("#camera-photo").click(); });
-  document.querySelector("#choose-photo-button").addEventListener("click", () => { closePhotoSources(); document.querySelector("#player-photo").click(); });
-  document.querySelector("#camera-photo").addEventListener("change", handlePhotoChange);
+  photoSourceTrigger.addEventListener("click", () => document.querySelector("#player-photo").click());
   document.querySelector("#player-photo").addEventListener("change", handlePhotoChange);
 
   document.querySelector("#start-form").addEventListener("submit", event => {
@@ -424,7 +419,7 @@
   const themeStorageKey = "martina-color-theme";
   const themeToggle = document.querySelector("#theme-toggle");
   const themeOptions = document.querySelector("#theme-options");
-  const themeColors = { rose: "#fffdfb", sage: "#fbfdf9", sky: "#fbfdff", lilac: "#fdfbff", peach: "#fffdfa" };
+  const themeColors = { rose: "#fffdfb", sage: "#fbfdf9", sky: "#fbfdff", lilac: "#fdfbff", peach: "#fffdfa", mint: "#fafffd", teal: "#fbfefe", navy: "#fbfcff", red: "#fffdfc", berry: "#fffafe", mustard: "#fffdf7", cocoa: "#fefcfb", graphite: "#fcfcfc" };
 
   function closeThemeOptions() {
     themeOptions.hidden = true;
