@@ -169,6 +169,18 @@
     state.resultId = rows[0]?.id || null;
   }
 
+  function normalizedPlayerName(name) {
+    return name.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("it-IT");
+  }
+
+  async function playerNameExists(name) {
+    const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=player_name&limit=1000`, { headers: apiHeaders() });
+    if (!response.ok) throw new Error("Non riesco a controllare la classifica.");
+    const requestedName = normalizedPlayerName(name);
+    const rows = await response.json();
+    return rows.some(row => normalizedPlayerName(row.player_name || "") === requestedName);
+  }
+
   function renderLeaderboard(rows, list) {
     list.replaceChildren();
     rows.forEach((row, index) => {
@@ -364,7 +376,12 @@
     document.querySelector(".profile-name").classList.toggle("profile-complete", hasName);
   }
 
-  document.querySelector("#player-name").addEventListener("input", updateProfileForm);
+  document.querySelector("#player-name").addEventListener("input", () => {
+    const error = document.querySelector("#name-error");
+    error.hidden = true;
+    document.querySelector(".profile-name").classList.remove("is-invalid");
+    updateProfileForm();
+  });
 
   async function handlePhotoChange(event) {
     const photo = event.target.files[0]; const error = document.querySelector("#photo-error"); error.hidden = true;
@@ -385,11 +402,34 @@
   photoSourceTrigger.addEventListener("click", () => document.querySelector("#player-photo").click());
   document.querySelector("#player-photo").addEventListener("change", handlePhotoChange);
 
-  document.querySelector("#start-form").addEventListener("submit", event => {
+  document.querySelector("#start-form").addEventListener("submit", async event => {
     event.preventDefault();
     state.name = document.querySelector("#player-name").value.trim();
     if (!state.name) return;
     if (!state.photo) { const error = document.querySelector("#photo-error"); error.textContent = "Prima la foto: in classifica vogliamo riconoscerti!"; error.hidden = false; return; }
+    const submit = document.querySelector("#profile-submit");
+    const nameError = document.querySelector("#name-error");
+    submit.disabled = true;
+    submit.classList.add("profile-submit-checking");
+    submit.firstChild.textContent = "Controllo gli archivi… ";
+    try {
+      if (await playerNameExists(state.name)) {
+        nameError.textContent = "Questo nome è già in classifica. L’amicizia si rinnova una volta sola: usa un nome diverso.";
+        nameError.hidden = false;
+        document.querySelector(".profile-name").classList.add("is-invalid");
+        document.querySelector("#player-name").focus();
+        return;
+      }
+    } catch (_) {
+      nameError.textContent = "Non riesco a controllare se questo nome è già stato usato. Riprova tra un attimo.";
+      nameError.hidden = false;
+      document.querySelector(".profile-name").classList.add("is-invalid");
+      return;
+    } finally {
+      submit.classList.remove("profile-submit-checking");
+      submit.firstChild.textContent = "Che il giudizio abbia inizio ";
+      updateProfileForm();
+    }
     state.index = 0; state.score = 0; state.startedAt = Date.now(); state.resultId = null; state.answers = [];
     feedbackPools = { positive: shuffled(positive), negative: shuffled(negative) };
     negativeImageIndex = 0;
@@ -401,6 +441,7 @@
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; if (state.index < questions.length) { saveQuizSession(); renderQuestion(); } else finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#restart-button").addEventListener("click", () => { clearQuizSession(); showScreen("welcome"); });
   document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
+  document.querySelector("#back-from-profile").addEventListener("click", () => { showScreen("welcome"); window.scrollTo({ top: 0, behavior: "smooth" }); });
   const quitDialog = document.querySelector("#quit-dialog");
   document.querySelector("#quit-quiz").addEventListener("click", () => quitDialog.showModal());
   document.querySelector("#confirm-quit").addEventListener("click", () => {
