@@ -52,11 +52,11 @@ body::before { position: fixed; z-index: 0; inset: 0; content: ""; pointer-event
 .theme-picker { z-index: 120; }
 
 .theme-picker { position: fixed; z-index: 120; right: max(14px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); }
-.theme-hint { position: absolute; right: 26px; bottom: 39px; display: none; width: 190px; align-items: flex-end; gap: 2px; color: var(--cherry); pointer-events: none; animation: hint-arrive 480ms ease-out 850ms both; }
-.theme-hint span { flex: 1; padding-bottom: 24px; font-family: Georgia, serif; font-size: 11px; font-style: italic; line-height: 1.35; text-align: right; transform: rotate(-3deg); }
-.theme-hint svg { width: 70px; height: 42px; flex: 0 0 70px; overflow: visible; }
+.theme-hint { position: absolute; right: 45px; bottom: 2px; display: none; width: min(205px, calc(100vw - 88px)); align-items: center; gap: 1px; color: var(--cherry); pointer-events: none; animation: hint-arrive 480ms ease-out 850ms both; }
+.theme-hint span { flex: 1; padding-bottom: 0; font-family: Georgia, serif; font-size: 10.5px; font-style: italic; line-height: 1.25; text-align: right; transform: rotate(-2deg); }
+.theme-hint svg { width: 50px; height: 30px; flex: 0 0 50px; overflow: visible; }
 .theme-hint path { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.35; }
-body:has(#welcome:not([hidden])) .theme-hint, body:has(#profile:not([hidden])) .theme-hint { display: flex; }
+body:has(#welcome:not([hidden])) .theme-hint { display: flex; }
 .theme-picker:has(.theme-options:not([hidden])) .theme-hint { display: none; }
 .theme-toggle { display: grid; width: 43px; height: 43px; place-items: center; border: 1px solid color-mix(in srgb, var(--cherry) 34%, white); border-radius: 50%; background: color-mix(in srgb, var(--paper) 92%, transparent); color: var(--cherry); box-shadow: 0 8px 24px #35252b1c; cursor: pointer; font-family: Georgia, serif; font-size: 22px; backdrop-filter: blur(8px); }
 .theme-options { position: absolute; right: 0; bottom: 52px; width: 184px; max-height: min(480px, calc(100dvh - 90px)); overflow-y: auto; padding: 11px; border: 1px solid color-mix(in srgb, var(--cherry) 24%, white); border-radius: 17px; background: color-mix(in srgb, var(--paper) 96%, transparent); box-shadow: 0 14px 38px #35252b22; scrollbar-width: thin; backdrop-filter: blur(10px); animation: reaction-arrive 180ms ease both; }
