@@ -2,8 +2,8 @@
   "use strict";
 
   const questions = window.MARTINA_QUESTIONS;
-  const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), participant: document.querySelector("#participant") };
-  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", resultId: null, answers: [], previousScreen: "ranking" };
+  const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), statistics: document.querySelector("#statistics"), participant: document.querySelector("#participant") };
+  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", resultId: null, answers: [], previousScreen: "ranking", rankingOrigin: "welcome" };
   const supabase = window.MARTINA_SUPABASE;
   const defaultReactionImage = "assets/martina-compleanno.png";
   const negativeReactionImages = [
@@ -145,7 +145,7 @@
     state.resultId = rows[0]?.id || null;
   }
 
-  function renderLeaderboard(rows, list = document.querySelector("#leaderboard-list")) {
+  function renderLeaderboard(rows, list) {
     list.replaceChildren();
     rows.forEach((row, index) => {
       const item = document.createElement("button"); item.type = "button"; item.className = `leaderboard-row${row.id === state.resultId ? " leaderboard-current" : ""}`; item.setAttribute("aria-label", `Apri il riepilogo di ${row.player_name}`);
@@ -154,7 +154,7 @@
       if (row.photo_path) { avatar.src = `${supabase.url}/storage/v1/object/public/quiz-photos/${encodeURIComponent(row.photo_path)}`; avatar.alt = ""; } else avatar.textContent = row.player_name.trim().charAt(0).toUpperCase();
       const details = document.createElement("div"); details.className = "leaderboard-player"; const name = document.createElement("strong"); name.textContent = row.player_name; const time = document.createElement("small"); time.textContent = formatSeconds(row.time_seconds); details.append(name, time);
       const score = document.createElement("span"); score.className = "leaderboard-score"; score.textContent = `${row.score}/${row.total_questions}`;
-      item.append(rank, avatar, details, score); item.addEventListener("click", () => openParticipant(row, list.id === "leaderboard-list" ? "results" : "ranking")); list.append(item);
+      item.append(rank, avatar, details, score); item.addEventListener("click", () => openParticipant(row, "ranking")); list.append(item);
     });
   }
 
@@ -210,11 +210,6 @@
     });
   }
 
-  function renderCollectiveResults(rows, context) {
-    renderPodium(rows, document.querySelector(`#${context}-podium`));
-    renderQuestionStats(rows, document.querySelector(`#${context}-question-stats`), document.querySelector(`#${context}-stats-status`));
-  }
-
   function openParticipant(row, previousScreen) {
     state.previousScreen = previousScreen;
     const card = document.querySelector("#participant-card"); card.replaceChildren();
@@ -246,7 +241,7 @@
     try {
       await saveResult(timeSeconds);
       status.textContent = "Sto preparando la classifica…";
-      const rows = await fetchLeaderboard(); renderLeaderboard(rows); renderCollectiveResults(rows, "result"); status.hidden = true;
+      const rows = await fetchLeaderboard(); renderPodium(rows, document.querySelector("#result-podium")); status.hidden = true;
     } catch (error) { status.textContent = `${error.message} Controlla che la tabella e il bucket siano stati creati su Supabase.`; }
   }
 
@@ -358,27 +353,26 @@
     const gradient = context.createLinearGradient(0, 0, 1080, 1350); gradient.addColorStop(0, "#fffaf8"); gradient.addColorStop(1, "#f6e8ed"); context.fillStyle = gradient; context.fillRect(0, 0, 1080, 1350);
     context.strokeStyle = "#bf6d88"; context.lineWidth = 3; context.strokeRect(54, 54, 972, 1242);
     context.textAlign = "center"; context.fillStyle = "#bd6c86"; context.font = "700 27px Arial"; context.fillText("EDIZIONE SPECIALE: TITINA BIRTHDAY", 540, 126);
-    context.fillStyle = "#1d191b"; context.font = "58px Georgia"; context.fillText("Il quiz che nessuno ha chiesto", 540, 207);
-    const photo = await loadImage(state.photoUrl || URL.createObjectURL(state.photo));
+    context.fillStyle = "#1d191b"; context.font = "46px Georgia"; context.fillText("Un quiz di cultura generale,", 540, 190);
+    context.fillStyle = "#bd6c86"; context.font = "italic 46px Georgia"; context.fillText("ma la cultura sono io", 540, 242);
     const reaction = verdictReaction(state.score);
-    const profileX = reaction ? 325 : 540; const profileRadius = reaction ? 122 : 155;
-    context.save(); context.beginPath(); context.arc(profileX, 420, profileRadius, 0, Math.PI * 2); context.clip(); drawCover(context, photo, profileX - profileRadius, 420 - profileRadius, profileRadius * 2, profileRadius * 2); context.restore();
-    context.strokeStyle = "#bf6d88"; context.lineWidth = 8; context.beginPath(); context.arc(profileX, 420, profileRadius + 5, 0, Math.PI * 2); context.stroke();
-    context.fillStyle = "#756b70"; context.font = "24px Arial"; context.fillText(state.name, profileX, 585);
     if (reaction) {
       const reactionImage = await loadImage(reaction.src);
-      context.fillStyle = "#fff"; context.fillRect(568, 260, 300, 330);
-      context.strokeStyle = "#ead0d9"; context.lineWidth = 3; context.strokeRect(568, 260, 300, 330);
-      drawContain(context, reactionImage, 580, 272, 276, 292);
-      context.fillStyle = "#9b7b85"; context.font = "italic 18px Georgia"; context.fillText("Martina commenta", 718, 582);
-      context.fillStyle = "#fff"; context.beginPath(); context.moveTo(698, 590); context.lineTo(738, 590); context.lineTo(718, 612); context.closePath(); context.fill();
+      context.fillStyle = "#fff"; context.fillRect(300, 280, 480, 400);
+      context.strokeStyle = "#ead0d9"; context.lineWidth = 3; context.strokeRect(300, 280, 480, 400);
+      drawContain(context, reactionImage, 316, 296, 448, 342);
+      context.fillStyle = "#9b7b85"; context.font = "italic 20px Georgia"; context.fillText("Martina ha qualcosa da dire", 540, 665);
+      context.fillStyle = "#fff"; context.beginPath(); context.moveTo(520, 680); context.lineTo(560, 680); context.lineTo(540, 704); context.closePath(); context.fill();
     }
-    context.fillStyle = "#bd6c86"; context.font = "118px Georgia"; context.fillText(`${state.score}/${questions.length}`, 540, 760);
-    context.fillStyle = "#756b70"; context.font = "700 23px Arial"; context.fillText("RISPOSTE GIUSTE", 540, 810);
+    context.fillStyle = "#fffdfb"; context.fillRect(622, 305, 126, 78);
+    context.strokeStyle = "#ead0d9"; context.lineWidth = 2; context.strokeRect(622, 305, 126, 78);
+    context.fillStyle = "#bd6c86"; context.font = "42px Georgia"; context.fillText(`${state.score}/${questions.length}`, 685, 355);
+    context.fillStyle = "#756b70"; context.font = "700 12px Arial"; context.fillText("RISPOSTE GIUSTE", 685, 375);
+    context.fillStyle = "#756b70"; context.font = "23px Arial"; context.fillText(`Verdetto di ${state.name}`, 540, 735);
     const verdictTitle = document.querySelector("#result-title").textContent;
     const verdictDescription = document.querySelector("#result-description").textContent;
-    context.fillStyle = "#1d191b"; drawFittedWrappedText(context, verdictTitle, 540, 850, 850, 145, { maxFont: 44, minFont: 27, lineRatio: 1.16 });
-    context.fillStyle = "#756b70"; drawFittedWrappedText(context, verdictDescription, 540, 1010, 870, 210, { maxFont: 25, minFont: 18, lineRatio: 1.3 });
+    context.fillStyle = "#1d191b"; drawFittedWrappedText(context, verdictTitle, 540, 770, 850, 150, { maxFont: 44, minFont: 27, lineRatio: 1.16 });
+    context.fillStyle = "#756b70"; drawFittedWrappedText(context, verdictDescription, 540, 945, 870, 250, { maxFont: 25, minFont: 18, lineRatio: 1.3 });
     context.fillStyle = "#9b7b85"; context.font = "italic 23px Georgia"; context.fillText("fatto con affetto e un pizzico di cattiveria ♡", 540, 1270);
     return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   }
@@ -411,9 +405,6 @@
     document.querySelector("#score-value").textContent = state.score;
     document.querySelector("#result-greeting").textContent = `${state.name}, abbiamo bisogno di parlare…`;
     document.querySelector("#score-total").textContent = questions.length;
-    const resultPhoto = document.querySelector("#result-player-photo");
-    resultPhoto.src = state.photoUrl || URL.createObjectURL(state.photo);
-    resultPhoto.alt = `Foto di ${state.name}`;
     document.querySelector("#result-title").textContent = title;
     document.querySelector("#result-description").textContent = description;
     const reaction = verdictReaction(state.score);
@@ -468,13 +459,29 @@
   document.querySelector("#restart-button").addEventListener("click", () => { showScreen("welcome"); });
   document.querySelector("#share-result").addEventListener("click", shareResult);
   document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
-  document.querySelector("#open-leaderboard").addEventListener("click", async () => {
+  async function openRanking(origin) {
+    state.rankingOrigin = origin;
     showScreen("ranking");
     const status = document.querySelector("#ranking-status"); const list = document.querySelector("#ranking-list");
     status.hidden = false; status.textContent = "Sto preparando la classifica…"; list.replaceChildren();
-    try { const rows = await fetchLeaderboard(); renderLeaderboard(rows, list); renderCollectiveResults(rows, "ranking"); status.hidden = rows.length > 0; if (!rows.length) status.textContent = "Nessuna ha ancora completato il quiz. Puoi essere la prima!"; }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    try { const rows = await fetchLeaderboard(); renderLeaderboard(rows, list); status.hidden = rows.length > 0; if (!rows.length) status.textContent = "Nessuna ha ancora completato il quiz. Puoi essere la prima!"; }
     catch (error) { status.textContent = error.message; }
-  });
-  document.querySelector("#back-from-ranking").addEventListener("click", () => showScreen("welcome"));
+  }
+
+  async function openStatistics() {
+    showScreen("statistics");
+    const status = document.querySelector("#statistics-status"); const list = document.querySelector("#statistics-question-stats");
+    status.hidden = false; status.textContent = "Sto contando le figuracce…"; list.replaceChildren();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    try { const rows = await fetchLeaderboard(); renderQuestionStats(rows, list, status); }
+    catch (error) { status.hidden = false; status.textContent = error.message; }
+  }
+
+  document.querySelector("#open-leaderboard").addEventListener("click", () => openRanking("welcome"));
+  document.querySelector("#open-full-ranking").addEventListener("click", () => openRanking("results"));
+  document.querySelector("#open-statistics").addEventListener("click", openStatistics);
+  document.querySelector("#back-from-ranking").addEventListener("click", () => { showScreen(state.rankingOrigin); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  document.querySelector("#back-from-statistics").addEventListener("click", () => { showScreen("results"); window.scrollTo({ top: 0, behavior: "smooth" }); });
   document.querySelector("#back-from-participant").addEventListener("click", () => showScreen(state.previousScreen));
 })();
