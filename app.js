@@ -427,7 +427,7 @@
   const themeStorageKey = "martina-color-theme";
   const themeToggle = document.querySelector("#theme-toggle");
   const themeOptions = document.querySelector("#theme-options");
-  const themeColors = { rose: "#fffdfb", sage: "#fbfdf9", sky: "#fbfdff", lilac: "#fdfbff", peach: "#fffdfa", mint: "#fafffd", teal: "#fbfefe", navy: "#fbfcff", red: "#fffdfc", berry: "#fffafe", mustard: "#fffdf7", cocoa: "#fefcfb", graphite: "#fcfcfc", gerbera: "#fffdf8", autumn: "#fffaf4", cinema: "#fffafb", strawberry: "#fffdf8", cemetery: "#17191f" };
+  const themeColors = { rose: "#fffdfb", sage: "#fbfdf9", sky: "#fbfdff", lilac: "#fdfbff", peach: "#fffdfa", navy: "#fbfcff", graphite: "#fcfcfc", gerbera: "#fffdf8", autumn: "#fffaf4", cinema: "#fffafb", strawberry: "#fffdf8", highlands: "#f9fbf8", cemetery: "#17191f" };
 
   function closeThemeOptions() {
     themeOptions.hidden = true;
