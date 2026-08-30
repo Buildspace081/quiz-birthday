@@ -52,6 +52,7 @@ body::before { position: fixed; z-index: 0; inset: 0; content: ""; pointer-event
 .theme-picker { z-index: 120; }
 
 .theme-picker { position: fixed; z-index: 120; right: max(14px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); }
+body[data-screen="quiz"] .theme-picker { display: none; }
 .theme-hint { position: absolute; right: 45px; bottom: 2px; display: none; width: min(205px, calc(100vw - 88px)); align-items: center; gap: 1px; color: var(--cherry); pointer-events: none; animation: hint-arrive 480ms ease-out 850ms both; }
 .theme-hint span { flex: 1; padding-bottom: 0; font-family: Georgia, serif; font-size: 10.5px; font-style: italic; line-height: 1.25; text-align: right; transform: rotate(-2deg); }
 .theme-hint svg { width: 50px; height: 30px; flex: 0 0 50px; overflow: visible; }
@@ -414,10 +415,10 @@ input:focus { border-color: var(--cherry); }
 .feedback-bubble::before { position: absolute; top: -9px; left: 23px; width: 18px; height: 18px; background: var(--accent-pale); content: ""; transform: rotate(45deg); }
 .feedback p { margin: 0; color: #64555d; font-size: 14px; font-style: italic; line-height: 1.7; }
 .reaction-next { min-height: 47px; margin-top: 14px; padding: 12px 15px; border-radius: 11px; font-size: 13px; }
-.feedback-overlay { position: fixed; z-index: 100; inset: 0; display: grid; overflow-y: auto; place-items: center; padding: 22px; background: #241e22d9; backdrop-filter: blur(7px); }
+.feedback-overlay { position: fixed; z-index: 100; inset: 0; display: grid; overflow: hidden; place-items: center; padding: 22px; background: #241e22d9; backdrop-filter: blur(7px); }
 .feedback-overlay[hidden] { display: none; }
-.feedback-overlay .feedback-card { width: min(100%, 420px); max-height: calc(100dvh - 44px); overflow-y: auto; border: 0; border-radius: 22px; background: var(--accent-pale); box-shadow: 0 22px 70px #120d105c; }
-.feedback-overlay .feedback-image { width: 100%; height: auto; max-height: calc(100dvh - 190px); object-fit: contain; object-position: center; background: #171416; }
+.feedback-overlay .feedback-card { display: grid; grid-template-rows: minmax(0, 1fr) auto; width: min(100%, 420px); height: min(720px, calc(100dvh - 44px)); max-height: calc(100dvh - 44px); overflow: hidden; border: 0; border-radius: 22px; background: var(--accent-pale); box-shadow: 0 22px 70px #120d105c; }
+.feedback-overlay .feedback-image { width: 100%; height: 100%; min-height: 0; max-height: none; object-fit: contain; object-position: center; background: #171416; }
 .feedback-overlay .feedback-bubble { padding: 17px 18px 18px; }
 .feedback-overlay .feedback-bubble::before { display: none; }
 .feedback-overlay .reaction-next { margin-top: 13px; }
@@ -566,9 +567,11 @@ input:focus { border-color: var(--cherry); }
   .answer { min-height: 56px; padding: 12px; }
   .feedback-image { height: 175px; }
   .feedback-overlay { padding: 12px; }
-  .feedback-overlay .feedback-card { width: min(100%, 390px); max-height: calc(100dvh - 24px); }
-  .feedback-overlay .feedback-image { height: auto; max-height: calc(100dvh - 176px); }
-  .feedback-overlay .feedback-bubble { padding: 14px 15px 15px; }
+  .feedback-overlay .feedback-card { width: min(100%, 390px); height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); }
+  .feedback-overlay .feedback-image { height: 100%; min-height: 0; max-height: none; }
+  .feedback-overlay .feedback-bubble { padding: 12px 15px 14px; }
+  .feedback-overlay .feedback p { font-size: 12px; line-height: 1.45; }
+  .feedback-overlay .reaction-next { min-height: 44px; margin-top: 9px; padding: 10px 13px; }
   .ranking { margin: 0 auto; padding-top: 0; }
   .ranking-back { padding-top: 2px; }
   .ranking-intro { margin-top: 5px; }
@@ -591,7 +594,7 @@ input:focus { border-color: var(--cherry); }
   .portrait-scene { width: 275px; }
   .portrait-note { right: -1px; font-size: 9px; }
   .feedback-image { height: 155px; }
-  .feedback-overlay .feedback-image { height: auto; max-height: calc(100dvh - 168px); }
+  .feedback-overlay .feedback-image { height: 100%; max-height: none; }
   .screen { padding-top: 16px; }
 }
 
