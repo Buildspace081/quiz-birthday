@@ -434,7 +434,8 @@
   }
 
   document.querySelector("#open-full-ranking").addEventListener("click", () => openRanking({ admin: false }));
-  document.querySelector("#martina-ranking-access").addEventListener("click", () => {
+  const martinaRankingAccess = document.querySelector("#martina-ranking-access");
+  function requestMartinaRankingAccess() {
     const pin = window.prompt("PIN di Martina");
     if (pin === null) return;
     if (pin.trim() !== "0109") {
@@ -442,7 +443,12 @@
       return;
     }
     openRanking({ origin: document.body.dataset.screen || "welcome", admin: true });
-  });
+  }
+  martinaRankingAccess.addEventListener("click", requestMartinaRankingAccess);
+  martinaRankingAccess.addEventListener("touchend", event => {
+    event.preventDefault();
+    requestMartinaRankingAccess();
+  }, { passive: false });
   document.querySelector("#back-from-participant").addEventListener("click", () => showScreen(state.previousScreen));
 
   window.addEventListener("popstate", event => {
