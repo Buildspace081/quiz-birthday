@@ -394,9 +394,10 @@ input:focus { border-color: var(--cherry); }
 :root[data-theme="cemetery"] .quit-dialog { background: var(--paper); }
 .progress-track { height: 6px; margin: 14px 0 49px; overflow: hidden; border-radius: 8px; background: var(--line); }
 .progress-bar { height: 100%; width: 0; border-radius: 8px; background: linear-gradient(90deg, var(--accent-border), var(--cherry)); transition: width .35s; }
+.quiz { width: 100%; text-align: center; }
 .quiz .eyebrow { display: inline-block; padding: 7px 11px; border-radius: 12px; background: var(--accent-soft); }
 .quiz h2 { margin: 18px 0 31px; font-size: clamp(34px, 7vw, 49px); }
-.answers { display: grid; gap: 12px; }
+.answers { display: grid; gap: 12px; text-align: left; }
 
 .answer {
   display: flex;
@@ -573,6 +574,7 @@ input:focus { border-color: var(--cherry); }
   .topbar { height: 62px; }
   .screen { padding: 18px 0 30px; }
   .welcome { position: relative; top: -18px; }
+  .quiz { position: relative; top: auto; margin-top: clamp(34px, 6dvh, 58px); margin-bottom: auto; }
   .portrait-scene { width: min(100%, 310px); margin-bottom: 24px; }
   .portrait { width: 156px; }
   .portrait-note { right: 0; font-size: 10px; }
@@ -580,7 +582,7 @@ input:focus { border-color: var(--cherry); }
   h1 { font-size: clamp(34px, 8.7vw, 41px); line-height: 1.15; }
   .home-intro { font-size: clamp(11px, 3.35vw, 14px); letter-spacing: 0; }
   .portrait::before { left: 50px; }
-  .progress-track { margin-bottom: 38px; }
+  .progress-track { margin-bottom: 28px; }
   .result-details { gap: 10px; }
   .result-card { padding: 29px 17px 5px; }
   .answer { min-height: 56px; padding: 12px; }
