@@ -3,7 +3,7 @@
 
   const questions = window.MARTINA_QUESTIONS;
   const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), participant: document.querySelector("#participant") };
-  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", photoDataUrl: "", resultId: null, answers: [], previousScreen: "ranking", rankingOrigin: "welcome" };
+  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", photoDataUrl: "", resultId: null, answers: [], previousScreen: "ranking" };
   const sessionKey = "martina-quiz-session-v1";
   const supabase = window.MARTINA_SUPABASE;
   const defaultReactionImage = "assets/martina-compleanno.png";
@@ -70,6 +70,11 @@
   function showScreen(name) {
     Object.entries(screens).forEach(([key, screen]) => { screen.hidden = key !== name; });
     document.body.dataset.screen = name;
+  }
+
+  function setHistoryScreen(name, mode = "replace") {
+    const method = mode === "push" ? "pushState" : "replaceState";
+    window.history[method]({ screen: name }, "");
   }
   function elapsed() { const seconds = Math.floor((Date.now() - state.startedAt) / 1000); return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }
 
@@ -301,6 +306,7 @@
       resultsScreen.classList.add("is-revealing");
     }
     showScreen("results");
+    setHistoryScreen("results");
     if (options.restore) {
       const status = document.querySelector("#leaderboard-status"); status.hidden = false; status.textContent = "Sto preparando il podio…";
       fetchLeaderboard().then(rows => { renderPodium(rows, document.querySelector("#result-podium")); status.hidden = true; }).catch(error => { status.textContent = error.message; });
@@ -391,12 +397,11 @@
     clearInterval(state.interval);
     document.querySelector("#timer").textContent = "00:00";
     state.interval = setInterval(() => { document.querySelector("#timer").textContent = elapsed(); }, 1000);
-    saveQuizSession(); renderQuestion(); showScreen("quiz");
+    saveQuizSession(); renderQuestion(); showScreen("quiz"); setHistoryScreen("quiz");
   });
   document.querySelector("#next-button").addEventListener("click", () => { state.index += 1; if (state.index < questions.length) { saveQuizSession(); renderQuestion(); } else finish(); window.scrollTo({ top: 0, behavior: "smooth" }); });
-  document.querySelector("#restart-button").addEventListener("click", () => { clearQuizSession(); showScreen("welcome"); });
-  document.querySelector("#begin-button").addEventListener("click", () => { showScreen("profile"); updateProfileForm(); });
-  document.querySelector("#back-from-profile").addEventListener("click", () => { showScreen("welcome"); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  document.querySelector("#restart-button").addEventListener("click", () => { clearQuizSession(); showScreen("welcome"); setHistoryScreen("welcome"); });
+  document.querySelector("#begin-button").addEventListener("click", () => { setHistoryScreen("welcome"); showScreen("profile"); setHistoryScreen("profile", "push"); updateProfileForm(); window.scrollTo({ top: 0, behavior: "smooth" }); });
   const quitDialog = document.querySelector("#quit-dialog");
   document.querySelector("#quit-quiz").addEventListener("click", () => quitDialog.showModal());
   document.querySelector("#confirm-quit").addEventListener("click", () => {
@@ -405,8 +410,11 @@
     quitDialog.close();
     window.location.reload();
   });
-  async function openRanking(origin) {
-    state.rankingOrigin = origin;
+  async function openRanking(options = {}) {
+    if (options.pushHistory !== false) {
+      setHistoryScreen("results");
+      setHistoryScreen("ranking", "push");
+    }
     showScreen("ranking");
     const status = document.querySelector("#ranking-status"); const list = document.querySelector("#ranking-list");
     status.hidden = false; status.textContent = "Sto preparando la classifica…"; list.replaceChildren();
@@ -415,10 +423,18 @@
     catch (error) { status.textContent = error.message; }
   }
 
-  document.querySelector("#open-leaderboard").addEventListener("click", () => openRanking("welcome"));
-  document.querySelector("#open-full-ranking").addEventListener("click", () => openRanking("results"));
-  document.querySelector("#back-from-ranking").addEventListener("click", () => { showScreen(state.rankingOrigin); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  document.querySelector("#open-full-ranking").addEventListener("click", () => openRanking());
   document.querySelector("#back-from-participant").addEventListener("click", () => showScreen(state.previousScreen));
+
+  window.addEventListener("popstate", event => {
+    const screen = event.state?.screen || "welcome";
+    if (screen === "ranking") openRanking({ pushHistory: false });
+    else {
+      showScreen(screen);
+      if (screen === "profile") updateProfileForm();
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  });
 
   const themeStorageKey = "martina-color-theme";
   const themeToggle = document.querySelector("#theme-toggle");
@@ -452,4 +468,5 @@
   document.addEventListener("keydown", event => { if (event.key === "Escape") closeThemeOptions(); });
   applyTheme(document.documentElement.dataset.theme || "rose");
   restoreQuizSession();
+  setHistoryScreen(document.body.dataset.screen || "welcome");
 })();
