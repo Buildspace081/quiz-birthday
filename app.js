@@ -3,7 +3,7 @@
 
   const questions = window.MARTINA_QUESTIONS;
   const screens = { welcome: document.querySelector("#welcome"), profile: document.querySelector("#profile"), quiz: document.querySelector("#quiz"), results: document.querySelector("#results"), ranking: document.querySelector("#ranking"), participant: document.querySelector("#participant") };
-  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", photoDataUrl: "", resultId: null, answers: [], previousScreen: "ranking" };
+  const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", photoDataUrl: "", resultId: null, answers: [], previousScreen: "ranking", adminRanking: false };
   const sessionKey = "martina-quiz-session-v1";
   const supabase = window.MARTINA_SUPABASE;
   const defaultReactionImage = "assets/martina-compleanno.png";
@@ -138,13 +138,17 @@
   function renderLeaderboard(rows, list) {
     list.replaceChildren();
     rows.forEach((row, index) => {
-      const item = document.createElement("button"); item.type = "button"; item.className = `leaderboard-row${row.id === state.resultId ? " leaderboard-current" : ""}`; item.setAttribute("aria-label", `Apri il riepilogo di ${row.player_name}`);
+      const item = document.createElement(state.adminRanking ? "button" : "div");
+      if (state.adminRanking) { item.type = "button"; item.setAttribute("aria-label", `Apri il riepilogo di ${row.player_name}`); }
+      item.className = `leaderboard-row${row.id === state.resultId ? " leaderboard-current" : ""}${state.adminRanking ? "" : " leaderboard-readonly"}`;
       const rank = document.createElement("span"); rank.className = "leaderboard-rank"; rank.textContent = index < 3 ? ["🥇", "🥈", "🥉"][index] : `${index + 1}.`;
       const avatar = document.createElement(row.photo_path ? "img" : "span"); avatar.className = "leaderboard-avatar";
       if (row.photo_path) { avatar.src = `${supabase.url}/storage/v1/object/public/quiz-photos/${encodeURIComponent(row.photo_path)}`; avatar.alt = ""; } else avatar.textContent = row.player_name.trim().charAt(0).toUpperCase();
       const details = document.createElement("div"); details.className = "leaderboard-player"; const name = document.createElement("strong"); name.textContent = row.player_name; const time = document.createElement("small"); time.textContent = formatSeconds(row.time_seconds); details.append(name, time);
       const score = document.createElement("span"); score.className = "leaderboard-score"; score.textContent = `${row.score}/${row.total_questions}`;
-      item.append(rank, avatar, details, score); item.addEventListener("click", () => openParticipant(row, "ranking")); list.append(item);
+      item.append(rank, avatar, details, score);
+      if (state.adminRanking) item.addEventListener("click", () => openParticipant(row, "ranking"));
+      list.append(item);
     });
   }
 
@@ -163,13 +167,17 @@
     const order = winners.length === 1 ? [0] : winners.length === 2 ? [1, 0] : [1, 0, 2];
     order.forEach(rankIndex => {
       const row = winners[rankIndex];
-      const item = document.createElement("button"); item.type = "button"; item.className = `podium-place podium-place-${rankIndex + 1}`;
+      const item = document.createElement(state.adminRanking ? "button" : "div");
+      if (state.adminRanking) item.type = "button";
+      item.className = `podium-place podium-place-${rankIndex + 1}${state.adminRanking ? "" : " podium-readonly"}`;
       const medal = document.createElement("span"); medal.className = "podium-medal"; medal.textContent = ["🥇", "🥈", "🥉"][rankIndex];
       const avatar = document.createElement(row.photo_path ? "img" : "span"); avatar.className = "podium-avatar";
       if (row.photo_path) { avatar.src = publicPhotoUrl(row.photo_path); avatar.alt = `Foto di ${row.player_name}`; } else avatar.textContent = row.player_name.trim().charAt(0).toUpperCase();
       const name = document.createElement("strong"); name.textContent = row.player_name;
       const score = document.createElement("small"); score.textContent = `${row.score}/${row.total_questions}`;
-      item.append(medal, avatar, name, score); item.addEventListener("click", () => openParticipant(row, target.id === "result-podium" ? "results" : "ranking")); target.append(item);
+      item.append(medal, avatar, name, score);
+      if (state.adminRanking) item.addEventListener("click", () => openParticipant(row, target.id === "result-podium" ? "results" : "ranking"));
+      target.append(item);
     });
   }
 
@@ -274,6 +282,7 @@
   }
 
   function finish(options = {}) {
+    state.adminRanking = false;
     clearInterval(state.interval);
     const timeSeconds = options.timeSeconds ?? Math.floor((Date.now() - state.startedAt) / 1000);
     const percentage = Math.round((state.score / questions.length) * 100);
@@ -411,8 +420,9 @@
     window.location.reload();
   });
   async function openRanking(options = {}) {
+    if (Object.prototype.hasOwnProperty.call(options, "admin")) state.adminRanking = options.admin;
     if (options.pushHistory !== false) {
-      setHistoryScreen("results");
+      setHistoryScreen(options.origin || "results");
       setHistoryScreen("ranking", "push");
     }
     showScreen("ranking");
@@ -423,7 +433,16 @@
     catch (error) { status.textContent = error.message; }
   }
 
-  document.querySelector("#open-full-ranking").addEventListener("click", () => openRanking());
+  document.querySelector("#open-full-ranking").addEventListener("click", () => openRanking({ admin: false }));
+  document.querySelector("#martina-ranking-access").addEventListener("click", () => {
+    const pin = window.prompt("PIN di Martina");
+    if (pin === null) return;
+    if (pin.trim() !== "0109") {
+      window.alert("PIN sbagliato. La classifica resta sotto protezione.");
+      return;
+    }
+    openRanking({ origin: document.body.dataset.screen || "welcome", admin: true });
+  });
   document.querySelector("#back-from-participant").addEventListener("click", () => showScreen(state.previousScreen));
 
   window.addEventListener("popstate", event => {
