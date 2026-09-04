@@ -6,12 +6,6 @@
   const state = { name: "", index: 0, score: 0, startedAt: 0, interval: null, photo: null, photoUrl: "", photoDataUrl: "", resultId: null, answers: [], previousScreen: "ranking", adminRanking: false };
   const sessionKey = "martina-quiz-session-v1";
   const supabase = window.MARTINA_SUPABASE;
-  const leaderboardScoreOverrides = new Map([
-    ["79bb64a3-df18-4220-b034-749966b3c1b4", 20],
-    ["1e0b51f3-8648-4d10-ae8a-0ab1fe0f7507", 19],
-    ["9cccfe31-65f6-4436-9e47-13697328e76e", 18],
-    ["15c3d0a4-bf83-49f0-ab88-04d84d4f7675", 17]
-  ]);
   const defaultReactionImage = "assets/martina-compleanno.png";
   const negativeReactionImages = [
     "assets/martina-errore-1.jpeg",
@@ -161,12 +155,7 @@
   async function fetchLeaderboard() {
     const response = await fetch(`${supabase.url}/rest/v1/quiz_results?select=id,player_name,photo_path,score,total_questions,time_seconds,answers&order=score.desc,time_seconds.asc,created_at.asc&limit=1000`, { headers: apiHeaders() });
     if (!response.ok) throw new Error("Non sono riuscita a caricare la classifica.");
-    const rows = await response.json();
-    const flavi = rows.find(row => normalizedPlayerName(row.player_name || "") === "flavi");
-    if (!flavi) return rows;
-    return rows
-      .map(row => leaderboardScoreOverrides.has(row.id) ? { ...row, score: Math.min(leaderboardScoreOverrides.get(row.id), flavi.score - 1) } : row)
-      .sort((first, second) => second.score - first.score);
+    return response.json();
   }
 
   function publicPhotoUrl(path) { return `${supabase.url}/storage/v1/object/public/quiz-photos/${encodeURIComponent(path)}`; }
